@@ -1,6 +1,9 @@
 package com.example.erp.service.client;
 
-import com.example.erp.entity.auth.client.Client;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -9,9 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.example.erp.entity.client.Client;
 
 @Service
 public class ClientService {
