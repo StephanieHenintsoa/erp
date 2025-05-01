@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="sidebar">
+        <nav class="sidebar">
+            <div class="sidebar-brand">
+                ERP System
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item" th:classappend="${activePage == 'dashboard'} ? 'active'">
+                    <a th:href="@{/dashboard}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                </li>
+                <li class="nav-item" th:classappend="${activePage == 'clients'} ? 'active'">
+                    <a th:href="@{/clients}"><i class="fas fa-users"></i> Gestion des clients</a>
+                </li>
+                <li class="nav-item" th:classappend="${activePage == 'inventory'} ? 'active'">
+                    <a th:href="@{/inventory}"><i class="fas fa-boxes"></i> Gestion des stocks</a>
+                </li>
+                <li class="nav-item" th:classappend="${activePage == 'reports'} ? 'active'">
+                    <a th:href="@{/reports}"><i class="fas fa-chart-bar"></i> Rapports</a>
+                </li>
+                <li class="nav-item">
+                    <form th:action="@{/logout}" method="post">
+                        <button type="submit" class="nav-link btn btn-link"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</body>
+</html>

@@ -1,0 +1,8 @@
+E:\S6\Evaluation-ERP\erp\src\main\java\com\example\erp\config\RestTemplateConfig.java
+E:\S6\Evaluation-ERP\erp\src\main\java\com\example\erp\controller\auth\LoginController.java
+E:\S6\Evaluation-ERP\erp\src\main\java\com\example\erp\controller\client\ClientController.java
+E:\S6\Evaluation-ERP\erp\src\main\java\com\example\erp\entity\auth\client\Client.java
+E:\S6\Evaluation-ERP\erp\src\main\java\com\example\erp\entity\auth\LoginRequest.java
+E:\S6\Evaluation-ERP\erp\src\main\java\com\example\erp\ErpApplication.java
+E:\S6\Evaluation-ERP\erp\src\main\java\com\example\erp\service\auth\LoginService.java
+E:\S6\Evaluation-ERP\erp\src\main\java\com\example\erp\service\client\ClientService.java
