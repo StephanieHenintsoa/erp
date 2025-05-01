@@ -20,6 +20,9 @@
                 </a>
             </div>
             
+            <!-- Alert for success or error messages -->
+            <div id="alert-container"></div>
+            
             <div class="quotation-details mb-4">
                 <div class="card">
                     <div class="card-body">
@@ -34,7 +37,7 @@
                                 <strong>Status:</strong> <span th:text="${quotation.status}"></span>
                             </div>
                             <div class="col-md-2">
-                                <strong>Total:</strong> <span th:text="${quotation.grandTotal}"></span>
+                                <strong>Total:</strong> <span id="grand-total" th:text="${quotation.grandTotal}"></span>
                             </div>
                         </div>
                     </div>
@@ -49,17 +52,29 @@
                             <th>Quantity</th>
                             <th>Rate</th>
                             <th>Amount</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="item : ${items}">
-                            <td th:text="${item.itemName}"></td>
-                            <td th:text="${item.qty}"></td>
-                            <td th:text="${item.rate}"></td>
-                            <td th:text="${item.amount}"></td>
+                            <td th:text="${item.itemName}" class="item-name"></td>
+                            <td th:text="${item.qty}" class="item-qty"></td>
+                            <td>
+                                <input type="number" step="0.01" th:value="${item.rate}" class="form-control rate-input" 
+                                       style="width: 100px;">
+                            </td>
+                            <td th:text="${item.amount}" class="item-amount"></td>
+                            <td>
+                                <button class="btn btn-primary btn-sm update-rate-btn" 
+                                        th:data-quotation-name="${quotationName}" 
+                                        th:data-item-name="${item.itemName}">
+                                    <i class="fas fa-save"></i> Update
+                                </button>
+                                <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                            </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(items)}">
-                            <td colspan="4" class="text-center">No items found for this quotation.</td>
+                            <td colspan="5" class="text-center">No items found for this quotation.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -69,5 +84,118 @@
 
     <!-- Footer -->
     <div th:replace="fragments/footer :: footer"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.update-rate-btn').click(function() {
+                const button = $(this);
+                const spinner = button.next('.spinner-border');
+                const quotationName = button.data('quotation-name');
+                const itemName = button.data('item-name');
+                const row = button.closest('tr');
+                const newRate = row.find('.rate-input').val();
+                
+                // Show spinner, disable button
+                button.prop('disabled', true);
+                spinner.removeClass('d-none');
+                
+                // Clear previous alerts
+                $('#alert-container').empty();
+                
+                $.ajax({
+                    url: 'http://erpnext.localhost:8000/api/method/erpnext.supplier.supplier_quotation_api_controller.update_quotation_item_rate',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        quotation_name: quotationName,
+                        item_name: itemName,
+                        new_rate: parseFloat(newRate)
+                    }),
+                    headers: {
+                        'Authorization': 'token c2626e78b79c88b:1a90aa5401c94b4'
+                    },
+                    success: function(response) {
+                        // Re-enable button and hide spinner
+                        button.prop('disabled', false);
+                        spinner.addClass('d-none');
+                        
+                        console.log("Response:", response);
+                        
+                        if (response && response.message && response.message.status === 'success') {
+                            // Update the amount and grand total on the page
+                            const qty = parseFloat(row.find('.item-qty').text());
+                            const newAmount = qty * parseFloat(newRate);
+                            row.find('.item-amount').text(newAmount.toFixed(2));
+                            
+                            if (response.message.data && response.message.data.new_grand_total) {
+                                $('#grand-total').text(response.message.data.new_grand_total);
+                            }
+                            
+                            // Show success message
+                            const alertHtml = `
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    Rate for ${itemName} updated successfully!
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            `;
+                            $('#alert-container').html(alertHtml);
+                        } else {
+                            // Show error message
+                            let errorMsg = 'Error updating rate';
+                            if (response && response.message) {
+                                if (typeof response.message === 'object') {
+                                    errorMsg = JSON.stringify(response.message);
+                                } else {
+                                    errorMsg = response.message;
+                                }
+                            }
+                            
+                            const alertHtml = `
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    ${errorMsg}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            `;
+                            $('#alert-container').html(alertHtml);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        // Re-enable button and hide spinner
+                        button.prop('disabled', false);
+                        spinner.addClass('d-none');
+                        
+                        console.error("Error details:", {
+                            xhr: xhr,
+                            status: status,
+                            error: error
+                        });
+                        
+                        let errorMessage = 'Failed to update rate';
+                        
+                        // Try to extract more detailed error information
+                        try {
+                            const errorResponse = xhr.responseJSON || JSON.parse(xhr.responseText);
+                            if (errorResponse && errorResponse.message) {
+                                errorMessage = errorResponse.message;
+                            } else if (errorResponse && errorResponse.errors && errorResponse.errors.length > 0) {
+                                errorMessage = errorResponse.errors[0].message;
+                            }
+                        } catch (e) {
+                            errorMessage = `${error} (${xhr.status})`;
+                        }
+                        
+                        const alertHtml = `
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                ${errorMessage}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        `;
+                        $('#alert-container').html(alertHtml);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

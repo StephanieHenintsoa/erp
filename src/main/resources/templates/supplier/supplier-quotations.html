@@ -14,8 +14,10 @@
         <!-- Content -->
         <div class="content-wrapper">
             <h1>Supplier Quotations for <span th:text="${supplierName}"></span></h1>
+
+
             <div class="table-container">
-                <table class="table table-striped quotation-table">
+                <table class="table table-striped">
                     <thead>
                         <tr>
                             <th>Quotation ID</th>
@@ -35,7 +37,7 @@
                             <td th:text="${quotation.status}"></td>
                             <td>
                                 <a th:href="@{'/supplier-quotation-items/' + ${quotation.name}}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-list-ul"></i> Items Details
+                                    <i class="fas fa-list-ul"></i> Détails matériels
                                 </a>
                             </td>
                         </tr>

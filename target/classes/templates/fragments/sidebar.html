@@ -10,14 +10,8 @@
                 <li class="nav-item" th:classappend="${activePage == 'dashboard'} ? 'active'">
                     <a th:href="@{/dashboard}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 </li>
-                <li class="nav-item" th:classappend="${activePage == 'clients'} ? 'active'">
-                    <a th:href="@{/clients}"><i class="fas fa-users"></i> Gestion des clients</a>
-                </li>
                 <li class="nav-item" th:classappend="${activePage == 'inventory'} ? 'active'">
-                    <a th:href="@{/suppliers}"><i class="fas fa-boxes"></i> Gestion des Fournisseurs</a>
-                </li>
-                <li class="nav-item" th:classappend="${activePage == 'reports'} ? 'active'">
-                    <a th:href="@{/reports}"><i class="fas fa-chart-bar"></i> Rapports</a>
+                    <a th:href="@{/suppliers}"><i class="fas fa-boxes"></i> Fournisseurs</a>
                 </li>
                 <li class="nav-item">
                     <form th:action="@{/logout}" method="post">

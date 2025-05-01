@@ -14,9 +14,9 @@
 
         <!-- Content -->
         <div class="content-wrapper">
-            <h1>Suppliers</h1>
+            <h1>Liste des Fournisseurs</h1>
             <div class="table-container">
-                <table class="table table-striped supplier-table">
+                <table class="table table-striped">
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -34,7 +34,7 @@
                             <td th:text="${supplier.country}"></td>
                             <td>
                                 <a th:href="@{/supplier-quotations/{name}(name=${supplier.name})}" class="btn btn-primary btn-quotation">
-                                    <i class="fas fa-file-invoice"></i> View Quotations
+                                    <i class="fas fa-file-invoice"></i> Liste des devis
                                 </a>
                             </td>
                         </tr>
