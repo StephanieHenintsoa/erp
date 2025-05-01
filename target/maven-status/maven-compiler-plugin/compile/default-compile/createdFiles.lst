@@ -1,1 +1,2 @@
 com\example\erp\ErpApplication.class
+com\example\erp\service\supplier\SupplierQuotationService.class

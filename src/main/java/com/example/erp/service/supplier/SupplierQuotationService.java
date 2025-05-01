@@ -1,7 +1,9 @@
 package com.example.erp.service.supplier;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.erp.entity.supplier.SupplierQuotation;
+import com.example.erp.entity.supplier.SupplierQuotationItem;
 
 @Service
 public class SupplierQuotationService {
@@ -29,8 +32,17 @@ public class SupplierQuotationService {
     @Value("${erpnext.api.secret}")
     private String apiSecret;
 
+    // Cache to store fetched quotations
+    private List<SupplierQuotation> cachedQuotations = new ArrayList<>();
+    private String lastFetchedSupplier = null;
+
     @SuppressWarnings("unchecked")
     public List<SupplierQuotation> getSupplierQuotations(String supplierName) {
+        // Return cached results if available for the same supplier
+        if (supplierName.equals(lastFetchedSupplier) && !cachedQuotations.isEmpty()) {
+            return cachedQuotations;
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "token " + apiKey + ":" + apiSecret);
@@ -51,13 +63,29 @@ public class SupplierQuotationService {
                     Map<String, Object> data = (Map<String, Object>) message.get("data");
                     if (data.containsKey("quotations")) {
                         List<Map<String, Object>> quotations = (List<Map<String, Object>>) data.get("quotations");
-                        return quotations.stream().map(quotation -> new SupplierQuotation(
-                            (String) quotation.get("name"),
-                            (String) quotation.get("supplier"),
-                            (String) quotation.get("transaction_date"),
-                            ((Number) quotation.get("grand_total")).doubleValue(),
-                            (String) quotation.get("status")
-                        )).collect(Collectors.toList());
+                        List<SupplierQuotation> result = quotations.stream().map(quotation -> {
+                            List<Map<String, Object>> items = (List<Map<String, Object>>) quotation.get("items");
+                            List<SupplierQuotationItem> quotationItems = items != null ? items.stream().map(item -> new SupplierQuotationItem(
+                                (String) item.getOrDefault("item_name", null),
+                                ((Number) item.get("qty")).doubleValue(),
+                                ((Number) item.get("rate")).doubleValue(),
+                                ((Number) item.get("amount")).doubleValue()
+                            )).collect(Collectors.toList()) : new ArrayList<>();
+                            return new SupplierQuotation(
+                                (String) quotation.get("name"),
+                                (String) quotation.get("supplier"),
+                                (String) quotation.get("transaction_date"),
+                                ((Number) quotation.get("grand_total")).doubleValue(),
+                                (String) quotation.get("status"),
+                                quotationItems
+                            );
+                        }).collect(Collectors.toList());
+                        
+                        // Cache the results
+                        this.cachedQuotations = result;
+                        this.lastFetchedSupplier = supplierName;
+                        
+                        return result;
                     }
                 }
             }
@@ -65,5 +93,20 @@ public class SupplierQuotationService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch supplier quotations from ERPNext: " + e.getMessage());
         }
+    }
+    
+    public SupplierQuotation getSupplierQuotationByName(String quotationName) {
+        // Check if the quotation is in the cache
+        Optional<SupplierQuotation> cachedQuotation = cachedQuotations.stream()
+                .filter(q -> q.getName().equals(quotationName))
+                .findFirst();
+        
+        if (cachedQuotation.isPresent()) {
+            return cachedQuotation.get();
+        }
+        
+        // If not in cache, we need to fetch all quotations from all suppliers until we find it
+        // This is not ideal for production, but for demonstration purposes
+        throw new RuntimeException("Quotation not found. Please navigate through the supplier's quotations first.");
     }
 }

@@ -245,6 +245,22 @@ body {
     font-size: 0.9rem;
 }
 
+/* Style spécifique pour les colonnes Quantity, Rate, Amount, Grand Total */
+.quotation-table .qty, .quotation-table .rate, .quotation-table .amount, .quotation-table .grand-total {
+    text-align: right;
+}
+
+/* Style pour la colonne Item Name */
+.quotation-table .item-name {
+    text-align: left;
+}
+
+/* Style pour les cellules avec rowspan */
+.quotation-table td[rowspan] {
+    vertical-align: middle;
+    border-right: 1px solid #e5e7eb;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .sidebar {

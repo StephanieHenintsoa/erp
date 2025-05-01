@@ -23,6 +23,7 @@
                             <th>Transaction Date</th>
                             <th>Grand Total</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -32,9 +33,14 @@
                             <td th:text="${quotation.transactionDate}"></td>
                             <td th:text="${quotation.grandTotal}"></td>
                             <td th:text="${quotation.status}"></td>
+                            <td>
+                                <a th:href="@{'/supplier-quotation-items/' + ${quotation.name}}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-list-ul"></i> Items Details
+                                </a>
+                            </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(quotations)}">
-                            <td colspan="5" class="text-center">No quotations found for this supplier.</td>
+                            <td colspan="6" class="text-center">No quotations found for this supplier.</td>
                         </tr>
                     </tbody>
                 </table>
