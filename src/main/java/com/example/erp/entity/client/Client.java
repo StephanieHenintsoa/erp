@@ -11,6 +11,7 @@ public class Client {
     public Client(String name, String nom, String date) {
         this.name = name;
         this.nom = nom;
+        this.date = date;
     }
 
     // Getters and setters
