@@ -1,5 +1,6 @@
 package com.example.erp.service.auth;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,7 +19,7 @@ public class LoginService {
     @Autowired
     private RestTemplate restTemplate;
 
-    public String login(String username, String password) {
+    public String login(String username, String password, HttpSession session) {
         // Prepare request body
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("usr", username);
@@ -33,9 +34,20 @@ public class LoginService {
 
         // Make API call
         try {
-            return restTemplate.postForObject(ERPNEXT_LOGIN_URL, request, String.class);
+            String response = restTemplate.postForObject(ERPNEXT_LOGIN_URL, request, String.class);
+            // Supposons que la réponse contient un identifiant ou un token
+            // Vous devrez peut-être parser la réponse JSON pour extraire des informations spécifiques
+            session.setAttribute("loggedInUser", username); // Stocker l'utilisateur dans la session
+            session.setAttribute("isAuthenticated", true); // Indicateur d'authentification
+            return response;
         } catch (Exception e) {
             throw new RuntimeException("Failed to login to ERPNext: " + e.getMessage());
         }
+    }
+    
+    // Méthode utilitaire pour vérifier l'état de la session
+    public static boolean isAuthenticated(HttpSession session) {
+        Boolean isAuthenticated = (Boolean) session.getAttribute("isAuthenticated");
+        return isAuthenticated != null && isAuthenticated;
     }
 }

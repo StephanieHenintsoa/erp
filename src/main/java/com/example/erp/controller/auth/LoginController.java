@@ -16,6 +16,7 @@ public class LoginController {
     @Autowired
     private LoginService loginService;
 
+
     @GetMapping("/")
     public String showLoginForm(Model model) {
         model.addAttribute("loginRequest", new LoginRequest());
@@ -23,26 +24,30 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public String login(@ModelAttribute LoginRequest loginRequest, Model model) {
+    public String login(@ModelAttribute LoginRequest loginRequest, Model model, HttpSession session) {
         try {
-            String response = loginService.login(loginRequest.getUsername(), loginRequest.getPassword());
-            // Rediriger vers une page de succès ou tableau de bord
+            String response = loginService.login(loginRequest.getUsername(), loginRequest.getPassword(), session);
+            // Rediriger vers le tableau de bord après une connexion réussie
             return "redirect:/dashboard";
         } catch (Exception e) {
-            model.addAttribute("error", "Login failed: username or password was wrong" );
+            model.addAttribute("error", "Login failed: username or password was wrong");
             return "auth/login";
         }
     }
 
     @GetMapping("/dashboard")
-    public String showDashboard() {
+    public String showDashboard(HttpSession session) {
+        // Vérifier si l'utilisateur est authentifié
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; // Rediriger vers la page de connexion si non authentifié
+        }
         return "home/home";
     }
 
     @PostMapping("/logout")
     public String logout(HttpSession session) {
-        session.invalidate();
-        return "redirect:/"; 
+        session.invalidate(); // Invalider la session
+        return "redirect:/";
     }
-}
 
+}
