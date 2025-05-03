@@ -21,27 +21,43 @@
             </div>
             
             <!-- Alert for success or error messages -->
-            <div id="alert-container"></div>
+            <div th:replace="fragments/alert :: alert"></div>
+            <div id="ajax-alert-container"></div>
             
             <div class="quotation-details mb-4">
                 <div class="card">
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <strong>Supplier:</strong> <span th:text="${quotation.supplier}"></span>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <strong>Transaction Date:</strong> <span th:text="${quotation.transactionDate}"></span>
                             </div>
                             <div class="col-md-2">
-                                <strong>Status:</strong> <span th:text="${quotation.status}"></span>
+                                <strong>Status:</strong> 
+                                <span th:text="${quotation.status}" 
+                                      th:class="${quotation.status == 'Submitted' ? 'badge bg-success' : 
+                                               (quotation.status == 'Draft' ? 'badge bg-secondary' : 
+                                               (quotation.status == 'Cancelled' ? 'badge bg-danger' : 'badge bg-primary'))}">
+                                </span>
                             </div>
                             <div class="col-md-2">
                                 <strong>Total:</strong> <span id="grand-total" th:text="${quotation.grandTotal}"></span>
                             </div>
+                            <div class="col-md-2" th:if="${quotation.status == 'Submitted'}">
+                                <div class="alert alert-warning p-1 mb-0 small">
+                                    <i class="fas fa-exclamation-triangle"></i> Submitted document (read-only)
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Add helper message above the table if the quotation is submitted -->
+            <div class="alert alert-info mb-3" th:if="${quotation.status == 'Submitted'}">
+                <i class="fas fa-info-circle"></i> This quotation has been submitted and cannot be modified. To make changes, you need to cancel it first and then amend it in ERPNext.
             </div>
             
             <div class="table-container">
@@ -88,6 +104,30 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
+            // Check if quotation is submitted and disable input fields and buttons
+            const quotationStatus = $('.quotation-details .badge').text().trim();
+            if (quotationStatus === 'Submitted') {
+                // Disable all rate inputs
+                $('.rate-input').prop('disabled', true);
+                $('.rate-input').css('background-color', '#f8f9fa'); // Light gray background
+                
+                // Disable all update buttons
+                $('.update-rate-btn').prop('disabled', true);
+                $('.update-rate-btn').html('<i class="fas fa-lock"></i> Locked');
+                $('.update-rate-btn').removeClass('btn-primary').addClass('btn-secondary');
+                
+                // Add a tooltip to the buttons explaining why they're disabled
+                $('.update-rate-btn').attr('title', 'Cannot update submitted quotation');
+                
+                // Initialize Bootstrap tooltips if Bootstrap 5
+                if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                }
+            }
+            
             $('.update-rate-btn').click(function() {
                 const button = $(this);
                 const spinner = button.next('.spinner-border');
@@ -101,19 +141,18 @@
                 spinner.removeClass('d-none');
                 
                 // Clear previous alerts
-                $('#alert-container').empty();
+                $('#ajax-alert-container').empty();
                 
                 $.ajax({
                     url: 'http://erpnext.localhost:8000/api/method/erpnext.supplier.supplier_quotation_api_controller.update_quotation_item_rate',
                     type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
+                    data: {
                         quotation_name: quotationName,
                         item_name: itemName,
                         new_rate: parseFloat(newRate)
-                    }),
+                    },
                     headers: {
-                        'Authorization': 'token c2626e78b79c88b:1a90aa5401c94b4'
+                        'Authorization': 'token 862b4ed5f4a8c60:0190f529c09e6f1'
                     },
                     success: function(response) {
                         // Re-enable button and hide spinner
@@ -122,14 +161,14 @@
                         
                         console.log("Response:", response);
                         
-                        if (response && response.message && response.message.status === 'success') {
+                        if (response && response.status === "success") {
                             // Update the amount and grand total on the page
                             const qty = parseFloat(row.find('.item-qty').text());
                             const newAmount = qty * parseFloat(newRate);
                             row.find('.item-amount').text(newAmount.toFixed(2));
                             
-                            if (response.message.data && response.message.data.new_grand_total) {
-                                $('#grand-total').text(response.message.data.new_grand_total);
+                            if (response.data && response.data.new_grand_total) {
+                                $('#grand-total').text(response.data.new_grand_total);
                             }
                             
                             // Show success message
@@ -139,25 +178,29 @@
                                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             `;
-                            $('#alert-container').html(alertHtml);
+                            $('#ajax-alert-container').html(alertHtml);
                         } else {
                             // Show error message
                             let errorMsg = 'Error updating rate';
+                            let alertClass = 'alert-danger';
+                            
                             if (response && response.message) {
-                                if (typeof response.message === 'object') {
-                                    errorMsg = JSON.stringify(response.message);
-                                } else {
-                                    errorMsg = response.message;
-                                }
+                                errorMsg = response.message;
+                            }
+                            
+                            // For specific error types, provide more helpful messages
+                            if (response && response.code === "update_after_submit_error") {
+                                errorMsg = response.message || "Cannot modify a submitted quotation. Please cancel and amend the document first.";
+                                alertClass = 'alert-warning'; // Use warning style for business rule violations
                             }
                             
                             const alertHtml = `
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
                                     ${errorMsg}
                                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             `;
-                            $('#alert-container').html(alertHtml);
+                            $('#ajax-alert-container').html(alertHtml);
                         }
                     },
                     error: function(xhr, status, error) {
@@ -172,26 +215,45 @@
                         });
                         
                         let errorMessage = 'Failed to update rate';
+                        let alertClass = 'alert-danger';
                         
                         // Try to extract more detailed error information
                         try {
                             const errorResponse = xhr.responseJSON || JSON.parse(xhr.responseText);
+                            console.log("Error response:", errorResponse);
+                            
                             if (errorResponse && errorResponse.message) {
                                 errorMessage = errorResponse.message;
-                            } else if (errorResponse && errorResponse.errors && errorResponse.errors.length > 0) {
-                                errorMessage = errorResponse.errors[0].message;
+                                
+                                // Check for specific error types
+                                if (errorResponse.code === "update_after_submit_error") {
+                                    alertClass = 'alert-warning';
+                                }
+                            } else if (errorResponse && errorResponse._server_messages) {
+                                // Handle ERPNext's specific error format
+                                try {
+                                    const serverMessages = JSON.parse(errorResponse._server_messages);
+                                    if (Array.isArray(serverMessages) && serverMessages.length > 0) {
+                                        // Try to extract the message from the server messages
+                                        const firstMessage = JSON.parse(serverMessages[0]);
+                                        errorMessage = firstMessage.message || errorMessage;
+                                    }
+                                } catch (e) {
+                                    console.error("Error parsing server messages:", e);
+                                }
                             }
                         } catch (e) {
+                            console.error("Error parsing error response:", e);
                             errorMessage = `${error} (${xhr.status})`;
                         }
                         
                         const alertHtml = `
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
                                 ${errorMessage}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         `;
-                        $('#alert-container').html(alertHtml);
+                        $('#ajax-alert-container').html(alertHtml);
                     }
                 });
             });

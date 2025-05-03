@@ -107,4 +107,13 @@ public class SupplierQuotationService {
 
         throw new RuntimeException("Quotation not found. Please navigate through the supplier's quotations first.");
     }
+
+    public String getSupplierNameByQuotation(String quotationName) {
+        try {
+            SupplierQuotation quotation = getSupplierQuotationByName(quotationName);
+            return quotation != null ? quotation.getSupplier() : "";
+        } catch (Exception e) {
+            return "";
+        }
+    }
 }

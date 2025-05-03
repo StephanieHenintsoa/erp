@@ -21,7 +21,6 @@ import com.example.erp.entity.invoice.PurchaseInvoice;
 @Service
 public class PurchaseInvoiceService {
 
-    // Fixed URLs: purchase_order -> purchase_invoice
     private static final String ERPNEXT_PURCHASE_INVOICE_API_URL = "http://erpnext.localhost:8000/api/method/erpnext.purchase_order.purchase_invoice_api_controller.get_purchase_invoices";
     private static final String ERPNEXT_MARK_INVOICE_PAID_API_URL = "http://erpnext.localhost:8000/api/method/erpnext.purchase_order.purchase_invoice_api_controller.mark_invoice_paid";
 
@@ -74,6 +73,8 @@ public class PurchaseInvoiceService {
                         )).collect(Collectors.toList());
 
                         this.cachedPurchaseInvoices = result;
+
+                        System.out.println("Len invoices: " + result.size());
                         return result;
                     }
                 }
