@@ -1,6 +1,5 @@
 package com.example.erp.service.invoice;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,9 @@ import com.example.erp.entity.invoice.PurchaseInvoice;
 @Service
 public class PurchaseInvoiceService {
 
+    // Fixed URLs: purchase_order -> purchase_invoice
     private static final String ERPNEXT_PURCHASE_INVOICE_API_URL = "http://erpnext.localhost:8000/api/method/erpnext.purchase_order.purchase_invoice_api_controller.get_purchase_invoices";
+    private static final String ERPNEXT_MARK_INVOICE_PAID_API_URL = "http://erpnext.localhost:8000/api/method/erpnext.purchase_order.purchase_invoice_api_controller.mark_invoice_paid";
 
     @Autowired
     private RestTemplate restTemplate;
@@ -84,6 +85,58 @@ public class PurchaseInvoiceService {
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
             throw new RuntimeException("Failed to fetch purchase invoices from ERPNext: " + e.getMessage());
+        }
+    }
+
+    @SuppressWarnings("rawtypes")
+    public void markInvoicePaid(String invoiceName) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "token " + apiKey + ":" + apiSecret);
+
+        String url = ERPNEXT_MARK_INVOICE_PAID_API_URL + "?invoice_name=" + invoiceName;
+        HttpEntity<String> request = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                request,
+                Map.class
+            );
+
+            Map<String, Object> responseBody = response.getBody();
+            // Fixed response parsing logic
+            if (responseBody != null) {
+                // Check if the response contains a "message" field which contains the actual response data
+                if (responseBody.containsKey("message")) {
+                    Map<String, Object> messageBody = (Map<String, Object>) responseBody.get("message");
+                    
+                    // Now check the status in the message body
+                    if (messageBody.containsKey("status") && "success".equals(messageBody.get("status"))) {
+                        // Clear cache to refresh invoice list
+                        this.cachedPurchaseInvoices.clear();
+                        return;
+                    } else if (messageBody.containsKey("status") && "error".equals(messageBody.get("status"))) {
+                        throw new RuntimeException("Failed to mark invoice as paid: " + messageBody.get("message"));
+                    }
+                } 
+                // Direct check for success status in the response
+                else if (responseBody.containsKey("status") && "success".equals(responseBody.get("status"))) {
+                    // Clear cache to refresh invoice list
+                    this.cachedPurchaseInvoices.clear();
+                    return;
+                }
+            }
+            
+            // If we reach here, something unexpected happened
+            throw new RuntimeException("Failed to mark invoice as paid: " + responseBody);
+        } catch (HttpClientErrorException e) {
+            System.err.println("HTTP Error: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+            throw new RuntimeException("Failed to mark invoice as paid: HTTP " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            throw new RuntimeException("Failed to mark invoice as paid: " + e.getMessage());
         }
     }
 }
