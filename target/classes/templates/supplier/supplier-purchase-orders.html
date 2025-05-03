@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Supplier Purchase Orders</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div th:replace="fragments/sidebar :: sidebar"></div>
+
+        <!-- Content -->
+        <div class="content-wrapper">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Purchase Orders for <span th:text="${supplierName}"></span></h1>
+                <a th:href="@{/suppliers}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Suppliers
+                </a>
+            </div>
+
+            <!-- Filter Dropdown -->
+            <div class="mb-3">
+                <label for="statusFilter" class="form-label">Filter by Status:</label>
+                <select id="statusFilter" class="form-select w-auto" onchange="filterPurchaseOrders()">
+                    <option value="all" th:selected="${status == 'all'}">Tous</option>
+                    <option value="Completed" th:selected="${status == 'Completed'}">Payé</option>
+                    <option value="To Bill" th:selected="${status == 'To Bill'}">Reçu</option>
+                </select>
+            </div>
+
+            <div class="table-container">
+                <table class="table table-striped" id="purchaseOrderTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Transaction Date</th>
+                            <th>Schedule Date</th>
+                            <th>Grand Total</th>
+                            <th>Status</th>
+                            <th>Reçu</th>
+                            <th>Payé</th>
+                            <th>Items</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="order : ${purchaseOrders}" th:class="${order.status}">
+                            <td th:text="${order.name}"></td>
+                            <td th:text="${order.transactionDate}"></td>
+                            <td th:text="${order.scheduleDate}"></td>
+                            <td th:text="${order.grandTotal}"></td>
+                            <td th:text="${order.status}"></td>
+                            <td th:text="${order.isReceived} ? 'Oui' : 'Non'"></td>
+                            <td th:text="${order.isPaid} ? 'Oui' : 'Non'"></td>
+                            <td>
+                                <ul>
+                                    <li th:each="item : ${order.items}">
+                                        <span th:text="${item.itemName} + ': ' + ${item.qty} + ' @ ' + ${item.rate} + ' = ' + ${item.amount}"></span>
+                                    </li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(purchaseOrders)}">
+                            <td colspan="8" class="text-center">No purchase orders found for this supplier.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div th:replace="fragments/footer :: footer"></div>
+
+    <!-- JavaScript for Filtering -->
+    <script>
+        function filterPurchaseOrders() {
+            const filter = document.getElementById('statusFilter').value;
+            const rows = document.querySelectorAll('#purchaseOrderTable tbody tr');
+            
+            rows.forEach(row => {
+                const status = row.className;
+                if (filter === 'all' || status === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Apply filter on page load
+        window.onload = filterPurchaseOrders;
+    </script>
+</body>
+</html>

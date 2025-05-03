@@ -11,7 +11,6 @@
         <!-- Sidebar -->
         <div th:replace="fragments/sidebar :: sidebar"></div>
 
-
         <!-- Content -->
         <div class="content-wrapper">
             <h1>Liste des Fournisseurs</h1>
@@ -36,6 +35,9 @@
                                 <a th:href="@{/supplier-quotations/{name}(name=${supplier.name})}" class="btn btn-primary btn-quotation">
                                     <i class="fas fa-file-invoice"></i> Liste des devis
                                 </a>
+                                <a th:href="@{/supplier-purchase-orders/{name}(name=${supplier.name})}" class="btn btn-primary btn-purchase-order">
+                                    <i class="fas `System: fa-shopping-cart"></i> Liste des commandes
+                                </a>
                             </td>
                         </tr>
                     </tbody>
@@ -46,7 +48,5 @@
 
     <!-- Footer -->
     <div th:replace="fragments/footer :: footer"></div>
-
-   
 </body>
 </html>

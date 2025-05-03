@@ -95,8 +95,8 @@ public class SupplierQuotationService {
         }
     }
     
+    //getAll getSupplierQuotation et filtrer par quotationName
     public SupplierQuotation getSupplierQuotationByName(String quotationName) {
-        // Check if the quotation is in the cache
         Optional<SupplierQuotation> cachedQuotation = cachedQuotations.stream()
                 .filter(q -> q.getName().equals(quotationName))
                 .findFirst();
@@ -104,9 +104,7 @@ public class SupplierQuotationService {
         if (cachedQuotation.isPresent()) {
             return cachedQuotation.get();
         }
-        
-        // If not in cache, we need to fetch all quotations from all suppliers until we find it
-        // This is not ideal for production, but for demonstration purposes
+
         throw new RuntimeException("Quotation not found. Please navigate through the supplier's quotations first.");
     }
 }
