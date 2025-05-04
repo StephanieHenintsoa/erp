@@ -49,6 +49,7 @@ public class SupplierService {
             }
             throw new RuntimeException("No suppliers found in response");
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException("Failed to fetch suppliers from ERPNext: " + e.getMessage());
         }
     }

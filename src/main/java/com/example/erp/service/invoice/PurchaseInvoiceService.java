@@ -1,6 +1,5 @@
 package com.example.erp.service.invoice;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,14 +32,8 @@ public class PurchaseInvoiceService {
     @Value("${erpnext.api.secret}")
     private String apiSecret;
 
-    private List<PurchaseInvoice> cachedPurchaseInvoices = new ArrayList<>();
-
     @SuppressWarnings("unchecked")
     public List<PurchaseInvoice> getPurchaseInvoices() {
-        if (!cachedPurchaseInvoices.isEmpty()) {
-            return cachedPurchaseInvoices;
-        }
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "token " + apiKey + ":" + apiSecret);
@@ -72,9 +65,6 @@ public class PurchaseInvoiceService {
                             (String) invoice.get("status")
                         )).collect(Collectors.toList());
 
-                        this.cachedPurchaseInvoices = result;
-
-                        System.out.println("Len invoices: " + result.size());
                         return result;
                     }
                 }
@@ -82,9 +72,11 @@ public class PurchaseInvoiceService {
             throw new RuntimeException("No purchase invoices found in response");
         } catch (HttpClientErrorException e) {
             System.err.println("HTTP Error: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+            e.printStackTrace();
             throw new RuntimeException("Failed to fetch purchase invoices: HTTP " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("Failed to fetch purchase invoices from ERPNext: " + e.getMessage());
         }
     }
@@ -107,16 +99,14 @@ public class PurchaseInvoiceService {
             );
 
             Map<String, Object> responseBody = response.getBody();
+
             // Fixed response parsing logic
             if (responseBody != null) {
-                // Check if the response contains a "message" field which contains the actual response data
                 if (responseBody.containsKey("message")) {
                     Map<String, Object> messageBody = (Map<String, Object>) responseBody.get("message");
                     
                     // Now check the status in the message body
                     if (messageBody.containsKey("status") && "success".equals(messageBody.get("status"))) {
-                        // Clear cache to refresh invoice list
-                        this.cachedPurchaseInvoices.clear();
                         return;
                     } else if (messageBody.containsKey("status") && "error".equals(messageBody.get("status"))) {
                         throw new RuntimeException("Failed to mark invoice as paid: " + messageBody.get("message"));
@@ -124,18 +114,17 @@ public class PurchaseInvoiceService {
                 } 
                 // Direct check for success status in the response
                 else if (responseBody.containsKey("status") && "success".equals(responseBody.get("status"))) {
-                    // Clear cache to refresh invoice list
-                    this.cachedPurchaseInvoices.clear();
                     return;
                 }
             }
             
-            // If we reach here, something unexpected happened
             throw new RuntimeException("Failed to mark invoice as paid: " + responseBody);
         } catch (HttpClientErrorException e) {
             System.err.println("HTTP Error: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+            e.printStackTrace();
             throw new RuntimeException("Failed to mark invoice as paid: HTTP " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
         } catch (Exception e) {
+            e.printStackTrace();
             System.err.println("Error: " + e.getMessage());
             throw new RuntimeException("Failed to mark invoice as paid: " + e.getMessage());
         }

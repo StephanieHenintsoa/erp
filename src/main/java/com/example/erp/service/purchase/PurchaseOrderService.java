@@ -33,16 +33,8 @@ public class PurchaseOrderService {
     @Value("${erpnext.api.secret}")
     private String apiSecret;
 
-    private List<PurchaseOrder> cachedPurchaseOrders = new ArrayList<>();
-    private String lastFetchedSupplier = null;
-    private String lastFetchedStatus = null;
-
     @SuppressWarnings("unchecked")
     public List<PurchaseOrder> getPurchaseOrders(String supplierName, String status) {
-        if (supplierName.equals(lastFetchedSupplier) && status.equals(lastFetchedStatus) && !cachedPurchaseOrders.isEmpty()) {
-            return cachedPurchaseOrders;
-        }
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "token " + apiKey + ":" + apiSecret);
@@ -95,10 +87,6 @@ public class PurchaseOrderService {
                             return po;
                         }).collect(Collectors.toList());
 
-                        this.cachedPurchaseOrders = result;
-                        this.lastFetchedSupplier = supplierName;
-                        this.lastFetchedStatus = status;
-
                         return result;
                     }
                 }
@@ -106,9 +94,11 @@ public class PurchaseOrderService {
             throw new RuntimeException("No purchase orders found in response");
         } catch (HttpClientErrorException e) {
             System.err.println("HTTP Error: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+            e.printStackTrace();
             throw new RuntimeException("Failed to fetch purchase orders: HTTP " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("Failed to fetch purchase orders from ERPNext: " + e.getMessage());
         }
     }

@@ -58,7 +58,6 @@ public class SupplierController {
         model.addAttribute("quotations", quotations);
         model.addAttribute("supplierName", supplierName);
         
-        // Pass any messages from redirects
         if (message != null && !message.isEmpty()) {
             model.addAttribute("message", message);
             model.addAttribute("messageType", messageType);
