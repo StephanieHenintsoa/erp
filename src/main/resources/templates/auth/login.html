@@ -6,17 +6,17 @@
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
         
         :root {
-            --primary-color: #4361ee;
-            --primary-dark: #3a56d4;
-            --secondary-color: #7209b7;
-            --accent-color: #4cc9f0;
+            --primary-color: #1f6f5b; /* Vert foncé inspiré du modèle */
+            --primary-dark: #1a5c4d;
+            --secondary-color: #1a4034; /* Vert encore plus foncé pour contraste */
+            --accent-color: #99d0e1;
             --text-color: #2b2d42;
             --light-text: #8d99ae;
-            --background: #f8f9fa;
+            --background: #e6efec; /* Fond similaire au dashboard */
             --card-bg: #ffffff;
             --error-color: #e63946;
-            --success-color: #2a9d8f;
-            --shadow: 0 10px 30px rgba(67, 97, 238, 0.1);
+            --success-color: #1f6f5b;
+            --shadow: 0 10px 30px rgba(31, 111, 91, 0.1); /* Ombre ajustée */
             --input-bg: #f1f3f9;
         }
         
@@ -32,7 +32,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: linear-gradient(135deg, var(--background) 0%, #edf2fb 100%);
+            background: linear-gradient(135deg, var(--background) 0%, #d9e8e3 100%); /* Dégradé vert pâle */
             padding: 20px;
         }
         
@@ -56,7 +56,7 @@
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            background-color: rgba(67, 97, 238, 0.05);
+            background-color: rgba(31, 111, 91, 0.05);
         }
         
         .login-container:after {
@@ -67,7 +67,7 @@
             width: 150px;
             height: 150px;
             border-radius: 50%;
-            background-color: rgba(114, 9, 183, 0.03);
+            background-color: rgba(26, 64, 52, 0.03);
         }
         
         .logo {
@@ -133,7 +133,7 @@
         input:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+            box-shadow: 0 0 0 4px rgba(31, 111, 91, 0.1);
             background-color: var(--card-bg);
         }
         
@@ -161,12 +161,12 @@
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.2);
+            box-shadow: 0 4px 15px rgba(31, 111, 91, 0.2);
         }
         
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 7px 20px rgba(67, 97, 238, 0.3);
+            box-shadow: 0 7px 20px rgba(31, 111, 91, 0.3);
         }
         
         button:active {

@@ -3,17 +3,17 @@
 
 /* Variables globales pour cohérence avec la page de connexion */
 :root {
-    --primary-color: #4361ee;
-    --primary-dark: #3a56d4;
-    --secondary-color: #7209b7;
-    --accent-color: #4cc9f0;
+    --primary-color: #1f6f5b;
+    --primary-dark: #1a5c4d;
+    --secondary-color: #1a4034;
+    --accent-color: #99d0e1;
     --text-color: #2b2d42;
     --light-text: #8d99ae;
-    --background: #f8f9fa;
+    --background: #e6efec;
     --card-bg: #ffffff;
     --error-color: #e63946;
-    --success-color: #2a9d8f;
-    --shadow: 0 10px 30px rgba(67, 97, 238, 0.1);
+    --success-color: #1f6f5b;
+    --shadow: 0 10px 30px rgba(31, 111, 91, 0.1);
     --input-bg: #f1f3f9;
 }
 
@@ -28,7 +28,7 @@
 body {
     display: flex;
     min-height: 100vh;
-    background: linear-gradient(135deg, var(--background) 0%, #edf2fb 100%);
+    background: linear-gradient(135deg, var(--background) 0%, #d9e8e3 100%);
     margin: 0;
     flex-direction: column;
 }
@@ -39,137 +39,126 @@ body {
     flex: 1;
 }
 
-/* Styles de la sidebar */
+/* Styles de la sidebar avec nuances */
 .sidebar {
-    background-color: var(--card-bg);
-    color: var(--text-color);
+    background: linear-gradient(135deg, #1f6f5b 0%, #1a5c4d 100%);
+    color: #ffffff;
     height: 100vh;
-    width: 280px;
+    width: 250px;
     position: fixed;
     top: 0;
     left: 0;
-    padding-top: 30px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    padding-top: 20px;
     transition: width 0.3s ease;
 }
 
 .sidebar-brand {
-    font-size: 1.6rem;
-    padding: 24px;
-    color: var(--primary-color);
+    font-size: 1.4rem;
+    padding: 10px 20px;
+    color: #ffffff;
     text-align: center;
     font-weight: 600;
     letter-spacing: 0.5px;
+    border-bottom: 2px solid #ffffff;
+    margin-top: -10px;
 }
 
 .sidebar a {
-    color: var(--text-color);
+    color: #ffffff;
     text-decoration: none;
-    padding: 12px 24px;
+    padding: 15px;
     display: flex;
+    justify-content: flex-start;
     align-items: center;
-    border-radius: 8px;
-    margin: 8px 16px;
-    transition: background-color 0.3s, transform 0.2s;
+    border-radius: 10px;
+    margin: 8px 10px;
+    transition: all 0.3s ease;
     font-weight: 400;
 }
 
 .sidebar a i {
-    margin-right: 12px;
-    font-size: 1rem;
+    font-size: 1.2rem;
     width: 20px;
     text-align: center;
-    color: var(--light-text);
+    margin-right: 12px;
 }
 
 .sidebar a:hover {
-    background-color: var(--input-bg);
+    background-color: rgba(26, 92, 77, 0.8);
     transform: translateY(-2px);
 }
 
 .sidebar .nav-item.active a {
-    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+    background: var(--secondary-color);
     color: #ffffff;
     font-weight: 500;
-    box-shadow: 0 4px 15px rgba(67, 97, 238, 0.2);
-}
-
-.sidebar .nav-item.active a i {
-    color: #ffffff;
 }
 
 /* Bouton de déconnexion */
 .sidebar form button {
     width: 100%;
-    padding: 12px 24px;
+    padding: 15px;
     background: none;
     border: none;
-    color: var(--error-color);
+    color: #ffffff;
     text-align: left;
     font-size: 15px;
     font-weight: 400;
-    border-radius: 8px;
-    transition: background-color 0.3s, transform 0.2s;
+    border-radius: 10px;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
 }
 
 .sidebar form button i {
-    margin-right: 12px;
-    font-size: 1rem;
+    font-size: 1.2rem;
     width: 20px;
     text-align: center;
+    margin-right: 12px;
 }
 
 .sidebar form button:hover {
-    background-color: rgba(230, 57, 70, 0.08);
+    background-color: rgba(26, 92, 77, 0.8);
     transform: translateY(-2px);
 }
 
 /* Contenu principal */
 .content-wrapper {
     flex: 1;
-    margin-left: 280px;
-    padding: 40px;
+    margin-left: 250px;
+    padding: 20px;
     background-color: var(--background);
 }
 
 .content-wrapper h1 {
     color: var(--text-color);
     font-weight: 600;
-    font-size: 28px;
-    margin-bottom: 24px;
+    font-size: 24px;
+    margin-bottom: 20px;
 }
 
 /* Styles du footer */
 .footer {
     background-color: var(--card-bg);
     color: var(--light-text);
-    padding: 24px;
+    padding: 15px;
     text-align: center;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
     flex-shrink: 0;
     width: 100%;
 }
 
 .footer p {
-    margin-bottom: 12px;
+    margin-bottom: 0;
     font-size: 13px;
 }
 
 .footer a {
     color: var(--primary-color);
     text-decoration: none;
-    margin: 0 12px;
+    margin: 0 10px;
     font-weight: 500;
     transition: color 0.2s;
-    display: inline-flex;
-    align-items: center;
-}
-
-.footer a i {
-    margin-right: 8px;
-    font-size: 0.9rem;
 }
 
 .footer a:hover {
@@ -179,80 +168,85 @@ body {
 /* Styles spécifiques pour la table des fournisseurs et quotations */
 .table-container {
     background-color: var(--card-bg);
-    padding: 20px;
-    border-radius: 12px;
+    padding: 15px;
+    border-radius: 16px;
     box-shadow: var(--shadow);
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
-.supplier-table, .quotation-table {
+.supplier-table, .quotation-table, .table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+    border-collapse: collapse;
     background-color: var(--card-bg);
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
-    transition: all 0.3s ease;
 }
 
-.supplier-table th, .supplier-table td, .quotation-table th, .quotation-table td {
-    padding: 16px;
-    text-align: left;
+.supplier-table th, .supplier-table td, .quotation-table th, .quotation-table td, .table th, .table td {
+    padding: 12px;
+    text-align: center; /* Centrage des éléments */
     border-bottom: 1px solid #e5e7eb;
-    transition: background-color 0.3s ease;
 }
 
-.supplier-table th, .quotation-table th {
-    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+.supplier-table th, .quotation-table th, .table th {
+    background: var(--primary-color);
     color: #ffffff;
-    font-weight: 600;
-    text-transform: uppercase;
+    font-weight: 500;
     font-size: 0.9rem;
 }
 
-.supplier-table td, .quotation-table td {
+.supplier-table td, .quotation-table td, .table td {
     color: var(--text-color);
     font-weight: 400;
 }
 
-.supplier-table tr:hover, .quotation-table tr:hover {
+.supplier-table tr:hover, .quotation-table tr:hover, .table tr:hover {
     background-color: var(--input-bg);
-    transform: scale(1.01);
-    transition: transform 0.2s ease, background-color 0.2s ease;
-}
-
-.supplier-table tr:last-child td, .quotation-table tr:last-child td {
-    border-bottom: none;
 }
 
 /* Style pour le bouton View Quotations */
-.btn-quotation {
-    padding: 8px 12px;
+.btn-quotation, .btn-purchase-order {
+    padding: 6px 10px;
     font-size: 0.85rem;
-    border-radius: 8px;
+    border-radius: 10px;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    gap: 4px;
+    transition: all 0.3s ease;
+}
+
+.btn-quotation {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #ffffff;
 }
 
 .btn-quotation:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
 }
 
-.btn-quotation i {
-    font-size: 0.9rem;
+.btn-purchase-order {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: #ffffff;
+}
+
+.btn-purchase-order:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+    transform: translateY(-2px);
 }
 
 /* Style spécifique pour les colonnes Quantity, Rate, Amount, Grand Total */
 .quotation-table .qty, .quotation-table .rate, .quotation-table .amount, .quotation-table .grand-total {
-    text-align: right;
+    text-align: center; /* Centrage spécifique */
 }
 
 /* Style pour la colonne Item Name */
 .quotation-table .item-name {
-    text-align: left;
+    text-align: center; /* Centrage spécifique */
 }
 
 /* Style pour les cellules avec rowspan */
@@ -264,21 +258,21 @@ body {
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .sidebar {
-        width: 200px;
+        width: 60px;
     }
 
     .content-wrapper {
-        margin-left: 200px;
-        padding: 20px;
+        margin-left: 60px;
+        padding: 15px;
     }
 
-    .supplier-table th, .supplier-table td, .quotation-table th, .quotation-table td {
-        padding: 12px;
+    .supplier-table th, .supplier-table td, .quotation-table th, .quotation-table td, .table th, .table td {
+        padding: 10px;
         font-size: 0.85rem;
     }
 
-    .btn-quotation {
-        padding: 6px 10px;
+    .btn-quotation, .btn-purchase-order {
+        padding: 5px 8px;
         font-size: 0.8rem;
     }
 }
@@ -292,89 +286,15 @@ body {
 
     .content-wrapper {
         margin-left: 0;
-        padding: 16px;
+        padding: 10px;
     }
 
-    .supplier-table, .quotation-table {
+    .supplier-table, .quotation-table, .table {
         font-size: 0.8rem;
     }
 
-    .supplier-table th, .supplier-table td, .quotation-table th, .quotation-table td {
-        padding: 10px;
-    }
-
-    .btn-quotation {
-        padding: 5px 8px;
-        font-size: 0.75rem;
-    }
-}
-/* General container styling */
-.main-container {
-    display: flex;
-    min-height: 100vh;
-}
-
-.content-wrapper {
-    flex: 1;
-    padding: 20px;
-    background-color: #f8f9fa;
-}
-
-/* Table container */
-.table-container {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 15px;
-    margin-bottom: 20px;
-}
-
-.table th, .table td {
-    vertical-align: middle;
-}
-
-/* Button styles */
-.btn-quotation, .btn-purchase-order {
-    margin-right: 10px;
-    font-size: 0.9rem;
-    padding: 6px 12px;
-}
-
-.btn-quotation {
-    background-color: #007bff;
-    border-color: #007bff;
-}
-
-.btn-quotation:hover {
-    background-color: #0056b3;
-    border-color: #004085;
-}
-
-.btn-purchase-order {
-    background-color: #28a745;
-    border-color: #28a745;
-}
-
-.btn-purchase-order:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
-}
-
-/* Styling for supplier-purchase-orders page */
-.supplier-purchase-orders .table-container ul {
-    margin: 0;
-    padding-left: 20px;
-}
-
-.supplier-purchase-orders .table-container li {
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .content-wrapper {
-        padding: 10px;
+    .supplier-table th, .supplier-table td, .quotation-table th, .quotation-table td, .table th, .table td {
+        padding: 8px;
     }
 
     .btn-quotation, .btn-purchase-order {
