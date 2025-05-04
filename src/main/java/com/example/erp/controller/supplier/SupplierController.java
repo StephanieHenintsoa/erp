@@ -73,7 +73,8 @@ public class SupplierController {
             HttpSession session,
             @RequestParam(value = "message", required = false) String message,
             @RequestParam(value = "messageType", required = false) String messageType,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) 
+    {
         if (!LoginService.isAuthenticated(session)) {
             return "redirect:/";
         }
@@ -85,16 +86,14 @@ public class SupplierController {
             model.addAttribute("supplierName", quotation.getSupplier());
             model.addAttribute("items", quotation.getItems());
             
-            // Check if quotation is submitted and add warning if it is
+            // warning if quotation submitted
             if ("Submitted".equalsIgnoreCase(quotation.getStatus())) {
-                // Only add our own warning if no specific message is being passed
                 if (message == null || message.isEmpty()) {
                     model.addAttribute("message", "This quotation has been submitted and cannot be modified. You need to cancel it first in ERPNext.");
                     model.addAttribute("messageType", "warning");
                 }
             }
             
-            // Pass any explicit messages from redirects or parameters
             if (message != null && !message.isEmpty()) {
                 model.addAttribute("message", message);
                 model.addAttribute("messageType", messageType);
@@ -103,7 +102,6 @@ public class SupplierController {
             return "supplier/supplier-quotation-items";
             
         } catch (Exception e) {
-            // Handle any exceptions when retrieving the quotation
             redirectAttributes.addAttribute("message", "Error retrieving quotation: " + e.getMessage());
             redirectAttributes.addAttribute("messageType", "danger");
             return "redirect:/supplier-quotations/" + supplierQuotationService.getSupplierNameByQuotation(quotationName);
@@ -115,7 +113,8 @@ public class SupplierController {
             @PathVariable("name") String supplierName,
             @RequestParam(value = "status", defaultValue = "all") String status,
             Model model,
-            HttpSession session) {
+            HttpSession session) 
+    {
         if (!LoginService.isAuthenticated(session)) {
             return "redirect:/";
         }
