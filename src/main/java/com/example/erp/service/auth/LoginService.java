@@ -20,7 +20,6 @@ public class LoginService {
     private RestTemplate restTemplate;
 
     public String login(String username, String password, HttpSession session) {
-        // Prepare request body
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("usr", username);
         requestBody.put("pwd", password);
@@ -35,8 +34,6 @@ public class LoginService {
         // Make API call
         try {
             String response = restTemplate.postForObject(ERPNEXT_LOGIN_URL, request, String.class);
-            // Supposons que la réponse contient un identifiant ou un token
-            // Vous devrez peut-être parser la réponse JSON pour extraire des informations spécifiques
             session.setAttribute("loggedInUser", username); // Stocker l'utilisateur dans la session
             session.setAttribute("isAuthenticated", true); // Indicateur d'authentification
             return response;

@@ -5,15 +5,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import com.example.erp.entity.request.RequestForQuotation;
+import com.example.erp.entity.request.RequestForQuotationItem;
 import com.example.erp.entity.supplier.SupplierQuotation;
 import com.example.erp.entity.supplier.SupplierQuotationItem;
 
@@ -22,6 +28,7 @@ public class SupplierQuotationService {
 
     private static final String ERPNEXT_SUPPLIER_QUOTATION_API_URL = "http://erpnext.localhost:8000/api/method/erpnext.supplier.supplier_quotation_api_controller.get_supplier_quotations?supplier_name=";
     private static final String ERPNEXT_QUOTATION_BY_NAME_API_URL = "http://erpnext.localhost:8000/api/method/erpnext.supplier.supplier_quotation_api_controller.get_quotation_by_name?quotation_name=";
+    private static final String ERPNEXT_SUPPLIER_QUOTATION_CREATION_API_URL = "http://erpnext.localhost:8000/api/resource/Supplier Quotation";
 
     @Autowired
     private RestTemplate restTemplate;
@@ -137,5 +144,86 @@ public class SupplierQuotationService {
         } catch (Exception e) {
             throw new RuntimeException("Error retrieving quotation: " + e.getMessage());
         }
+    }
+
+    public String createSupplierQuotation(String supplier, RequestForQuotation rfq, Map<String, String> itemRates) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "token " + apiKey + ":" + apiSecret);
+
+        JSONObject requestBody = buildRequestBody(supplier, rfq, itemRates);
+        
+        HttpEntity<String> request = new HttpEntity<>(requestBody.toString(), headers);
+
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                ERPNEXT_SUPPLIER_QUOTATION_CREATION_API_URL,
+                request,
+                Map.class
+            );
+
+            Map<String, Object> responseBody = response.getBody();
+            if (responseBody != null && responseBody.containsKey("data")) {
+                Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
+                return (String) data.get("name");
+            }
+            
+            throw new RuntimeException("Failed to create supplier quotation: Invalid response format");
+        } catch (HttpClientErrorException e) {
+            System.err.println("HTTP Error: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to create supplier quotation: HTTP " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to create supplier quotation: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Builds the JSON request body for the API call
+     */
+    private JSONObject buildRequestBody(String supplier, RequestForQuotation rfq, Map<String, String> itemRates) {
+        JSONObject requestBody = new JSONObject();
+        
+        // Add main quotation details
+        requestBody.put("supplier", supplier);
+        requestBody.put("transaction_date", rfq.getTransactionDate());
+        requestBody.put("company", rfq.getCompany());
+        
+        // Process items from the form data
+        JSONArray itemsArray = new JSONArray();
+        List<RequestForQuotationItem> rfqItems = rfq.getItems();
+        
+        for (int i = 0; i < rfqItems.size(); i++) {
+            RequestForQuotationItem rfqItem = rfqItems.get(i);
+            String rateKey = "items[" + i + "].rate";
+            
+            if (itemRates.containsKey(rateKey)) {
+                try {
+                    double rate = Double.parseDouble(itemRates.get(rateKey));
+                    
+                    JSONObject item = new JSONObject();
+                    item.put("item_code", rfqItem.getItemCode());
+                    item.put("qty", rfqItem.getQty());
+                    item.put("rate", rate);
+                    item.put("uom", rfqItem.getUom());
+                    
+                    // Add description if available
+                    if (rfqItem.getDescription() != null && !rfqItem.getDescription().isEmpty()) {
+                        item.put("description", rfqItem.getDescription());
+                    } else {
+                        item.put("description", rfqItem.getItemCode());
+                    }
+                    
+                    itemsArray.put(item);
+                } catch (NumberFormatException e) {
+                    throw new RuntimeException("Invalid rate format for item " + rfqItem.getItemCode());
+                }
+            }
+        }
+        
+        requestBody.put("items", itemsArray);
+        return requestBody;
     }
 }

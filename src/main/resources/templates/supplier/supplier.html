@@ -36,7 +36,10 @@
                                     <i class="fas fa-file-invoice"></i> Liste des devis
                                 </a>
                                 <a th:href="@{/supplier-purchase-orders/{name}(name=${supplier.name})}" class="btn btn-primary btn-purchase-order">
-                                    <i class="fas `System: fa-shopping-cart"></i> Liste des commandes
+                                    <i class="fas fa-shopping-cart"></i> Liste des commandes
+                                </a>
+                                <a th:href="@{/supplier-rfqs/{name}(name=${supplier.name})}" class="btn btn-primary btn-rfq">
+                                    <i class="fas fa-file-alt"></i> Liste des demandes de devis
                                 </a>
                             </td>
                         </tr>

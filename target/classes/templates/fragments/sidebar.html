@@ -3,8 +3,10 @@
 <body>
     <div th:fragment="sidebar">
         <nav class="sidebar">
-            <div class="sidebar-brand">
-                ERP System
+            <div class="sidebar-brand" style="background-color: #1a4034; padding: 10px 20px; font-size: 1.6rem; font-weight: 700; color: #ffffff; border-bottom: 2px solid #ffffff; margin-top: -10px; text-align: center;">
+                <!-- Section logo avec image arrondie -->
+                <img src="/logo.png" alt="Logo" style="width: 80px; height: 80px; margin-bottom: 5px; border-radius: 50%;">
+                <div>New ERP</div>
             </div>
             <ul class="nav flex-column">
                 <li class="nav-item" th:classappend="${activePage == 'dashboard'} ? 'active'">
