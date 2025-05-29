@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Request for Quotation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div th:replace="fragments/sidebar :: sidebar"></div>
+
+        <!-- Content -->
+        <div class="content-wrapper">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Request for Quotation</h1>
+            </div>
+
+            <!-- Afficher les messages ou erreurs -->
+            <div th:if="${message}" th:class="'alert alert-' + ${messageType} + ' mt-3'" th:text="${message}"></div>
+
+            <form th:action="@{/submit}" method="post">
+                <div class="mb-3">
+                    <label for="suppliers" class="form-label">Suppliers</label>
+                    <select class="form-select" id="suppliers" name="suppliers">
+                        <option value="">Select a Supplier</option>
+                        <th:block th:each="supplier : ${suppliers}">
+                            <option th:value="${supplier.name}" th:text="${supplier.name}"></option>
+                        </th:block>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="transaction_date" class="form-label">Transaction Date</label>
+                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" required/>
+                </div>
+
+                <div class="mb-3">
+                    <label for="main_schedule_date" class="form-label">Schedule Date</label>
+                    <input type="date" id="main_schedule_date" name="main_schedule_date" class="form-control" required/>
+                </div>
+
+                <div class="mb-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="">Select Status</option>
+                        <option value="Draft">Draft</option>
+                        <option value="Submitted">Submitted</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="message_for_supplier" class="form-label">Message for Supplier</label>
+                    <textarea id="message_for_supplier" name="message_for_supplier" class="form-control" rows="4" placeholder="Enter message for supplier"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="items" class="form-label">Items</label>
+                    <select class="form-select" id="items" name="items">
+                        <option value="">Select an Item</option>
+                        <th:block th:each="item : ${items}">
+                            <option th:value="${item.name}" th:text="${item.name}"></option>
+                        </th:block>
+                    </select>
+                </div>
+
+                <!-- Champs dynamiques masqués par défaut -->
+                <div class="mb-3" id="quantityField" style="display: none;">
+                    <label for="quantity" class="form-label">Quantity</label>
+                    <input type="number" id="quantity" name="quantity" class="form-control" min="1" required/>
+                </div>
+
+                <div class="mb-3" id="scheduleDateField" style="display: none;">
+                    <label for="item_schedule_date" class="form-label">Item Schedule Date</label>
+                    <input type="date" id="item_schedule_date" name="item_schedule_date" class="form-control" required/>
+                </div>
+
+                <div class="mb-3">
+                    <label for="warehouses" class="form-label">Warehouses</label>
+                    <select class="form-select" id="warehouses" name="warehouses">
+                        <option value="">Select a Warehouse</option>
+                        <th:block th:each="warehouse : ${warehouses}">
+                            <option th:value="${warehouse.name}" th:text="${warehouse.name}"></option>
+                        </th:block>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div th:replace="fragments/footer :: footer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Afficher les champs pour les items quand un item est sélectionné
+            $('#items').change(function() {
+                var selectedItem = $(this).val();
+                if (selectedItem !== '') {
+                    $('#quantityField').show();
+                    $('#scheduleDateField').show();
+                    
+                    // Copier la date du Schedule Date principal vers le Schedule Date de l'item
+                    var mainScheduleDate = $('#main_schedule_date').val();
+                    if (mainScheduleDate) {
+                        $('#item_schedule_date').val(mainScheduleDate);
+                    }
+                } else {
+                    $('#quantityField').hide();
+                    $('#scheduleDateField').hide();
+                }
+            });
+            
+            // Mettre à jour le Schedule Date de l'item quand le Schedule Date principal change
+            $('#main_schedule_date').change(function() {
+                var mainDate = $(this).val();
+                if ($('#items').val() !== '') {
+                    $('#item_schedule_date').val(mainDate);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

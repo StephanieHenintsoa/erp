@@ -1,2 +1,3 @@
+com\example\erp\service\rfq\RfqService.class
 com\example\erp\ErpApplication.class
-com\example\erp\service\supplier\SupplierQuotationService.class
+com\example\erp\entity\item\Item.class

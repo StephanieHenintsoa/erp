@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Import CSV to ERP Next</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .file-upload-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .result-message {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Import CSV to ERP Next</h2>
+        <div class="file-upload-area">
+            <form th:action="@{/import-csv}" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="csvFile" class="form-label">Select CSV File</label>
+                    <input type="file" class="form-control" id="csvFile" name="csvFile" accept=".csv" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Upload and Import</button>
+            </form>
+        </div>
+        <div th:if="${result}" class="result-message">
+            <div th:class="${result.success} ? 'alert alert-success' : 'alert alert-danger'" role="alert">
+                <p th:text="${result.message}"></p>
+                <div th:if="${result.errors}">
+                    <h5>Errors:</h5>
+                    <ul>
+                        <li th:each="error : ${result.errors}" th:text="${error}"></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
