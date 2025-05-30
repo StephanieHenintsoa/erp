@@ -15,18 +15,6 @@
                 <li class="nav-item" th:classappend="${activePage == 'inventory'} ? 'active'">
                     <a th:href="@{/suppliers}"><i class="fas fa-boxes"></i> Fournisseurs</a>
                 </li>
-                <li class="nav-item" th:classappend="${activePage == 'purchase-invoices'} ? 'active'">
-                    <a th:href="@{/purchase-invoices}"><i class="fas fa-file-invoice"></i> Factures </a>
-                </li>
-                <li class="nav-item" th:classappend="${activePage == 'rfq-form'} ? 'active'">
-                    <a th:href="@{/rfq-form}"><i class="fas fa-file-alt"></i> RFQ Form</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/update-uom}">Update UOM</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/import-csv}">Import</a>
-                </li>
                 <li class="nav-item">
                     <form th:action="@{/logout}" method="post">
                         <button type="submit" class="nav-link btn btn-link"><i class="fas fa-sign-out-alt"></i> Log Out</button>
