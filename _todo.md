@@ -1,4 +1,3 @@
-Enhanced Prompt Instructions for Spring Boot and ERP Next Development
 Objective
 Create a Spring Boot application integrated with ERP Next, leveraging the Frappe Framework, with a focus on clean, modular, and maintainable code for ERP-related business logic (e.g., accounting, HR, CRM, management).
 Your Role
@@ -128,8 +127,6 @@ Here is an example of page that you need to follow for each page that you will c
 
 
 
-
-
 Configuration:
 Place Spring Boot configuration (e.g., beans, security, database) in the config package.
 Ensure configurations are modular and reusable.
@@ -177,11 +174,11 @@ Response Format
 
 Code:
 Provide complete, executable code for the requested functionality.
-Return code block that i can immediately copy and paste
-Don't return it as simple text 
 
 
 Summary:
+Include a brief summary at the end of the response
+Mention:
 What was implemented.
 Any assumptions made due to missing or ambiguous requirements.
 References to official documentation or resources used.

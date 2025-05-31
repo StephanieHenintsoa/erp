@@ -556,3 +556,36 @@ body {
         width: 100%;
     }
 }
+
+.footer {
+    padding: 20px 30px; 
+    background-color: #f8f9fa; 
+    text-align: center;
+    border-top: 1px solid #dee2e6; 
+    color: #6c757d; 
+    flex-shrink: 0; 
+}
+
+.footer .container { 
+    max-width: 100%; 
+}
+
+.main-container {
+    display: flex;
+}
+.content-wrapper {
+    flex-grow: 1;
+    padding: 20px;
+}
+.table-container {
+    margin-top: 20px;
+}
+.filter-container {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+}
+.nav-item.active a {
+    font-weight: bold;
+    color: #007bff;
+}

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Fiche Employé</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+      .main-container {
+          display: flex;
+      }
+      .content-wrapper {
+          flex-grow: 1;
+          padding: 20px;
+      }
+      .table-container {
+          margin-top: 20px;
+      }
+      .filter-container {
+          background-color: #f8f9fa;
+          padding: 15px;
+          border-radius: 5px;
+      }
+      .nav-item.active a {
+          font-weight: bold;
+          color: #007bff;
+      }
+      .card {
+          margin-top: 20px;
+      }
+      .card-title {
+          font-size: 1.5rem;
+      }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div th:replace="fragments/sidebar :: sidebar"></div>
+
+        <!-- Content -->
+        <div class="content-wrapper">
+            <h1>Fiche Employé</h1>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${employee.employeeName} ?: 'N/A'"></h5>
+                    <dl class="row">
+                        <dt class="col-sm-3">ID</dt>
+                        <dd class="col-sm-9" th:text="${employee.name} ?: 'N/A'"></dd>
+                        <dt class="col-sm-3">Prénom</dt>
+                        <dd class="col-sm-9" th:text="${employee.firstName} ?: 'N/A'"></dd>
+                        <dt class="col-sm-3">Entreprise</dt>
+                        <dd class="col-sm-9" th:text="${employee.company} ?: 'N/A'"></dd>
+                        <dt class="col-sm-3">Date d'Embauche</dt>
+                        <dd class="col-sm-9" th:text="${employee.dateOfJoining} ?: 'N/A'"></dd>
+                        <dt class="col-sm-3">Statut</dt>
+                        <dd class="col-sm-9" th:text="${employee.status} ?: 'N/A'"></dd>
+                        <dt class="col-sm-3">Département</dt>
+                        <dd class="col-sm-9" th:text="${employee.department} ?: 'N/A'"></dd>
+                        <dt class="col-sm-3">Poste</dt>
+                        <dd class="col-sm-9" th:text="${employee.designation} ?: 'N/A'"></dd>
+                        <dt class="col-sm-3">Genre</dt>
+                        <dd class="col-sm-9" th:text="${employee.gender} ?: 'N/A'"></dd>
+                        <dt class="col-sm-3">Date de Naissance</dt>
+                        <dd class="col-sm-9" th:text="${employee.dateOfBirth} ?: 'N/A'"></dd>
+                    </dl>
+                    <a th:href="@{/employees}" class="btn btn-secondary">Retour à la Liste</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>
