@@ -25,6 +25,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
+@SuppressWarnings("deprecation")
 public class EmployeeService {
 
     @Autowired
@@ -98,11 +99,9 @@ public class EmployeeService {
 
             String finalUrl = builder.build(false).toUriString();
             HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<String> rawResponse = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, String.class);
-            System.out.println("Raw API response: " + rawResponse.getBody());
+            // ResponseEntity<String> rawResponse = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, String.class);
             ResponseEntity<SingleEmployeeResponse> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, SingleEmployeeResponse.class);
             Employee employee = response.getBody().getData();
-            System.out.println("Deserialized employee name: " + (employee != null ? employee.getName() : "null"));
             return employee;
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error processing JSON for ERPNext Employee API call", e);

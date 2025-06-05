@@ -12,9 +12,13 @@ public class ErpNextConfig {
         return new RestTemplate();
     }
 
+    // ADMIN CREDENTIALS
+    public static final String ADMIN_USERNAME = "Administrator";
+    public static final String ADMIN_PASSWORD = "admin";
+
     // API KEY
-    public static final String API_KEY = "0967a4c76da9247";
-    public static final String API_SECRET = "d79c21617f52f57";
+    public static final String API_KEY = "ae80c13a3676603";
+    public static final String API_SECRET = "6ff142270f3a856";
 
     // ENDPOINTS 
     public static final String ERP_NEXT_API_EMPLOYEE_URL = "http://erpnext.localhost:8000/api/resource/Employee";  
