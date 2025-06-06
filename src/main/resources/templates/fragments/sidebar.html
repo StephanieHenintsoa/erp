@@ -27,12 +27,6 @@
                 <li class="nav-item" th:classappend="${activePage == 'payroll-months'} ? 'active'">
                     <a th:href="@{/payroll/months}"><i class="fas fa-calendar-alt"></i> Paie Mensuelle</a>
                 </li>
-                <li class="nav-item" th:classappend="${activePage == 'reset-database'} ? 'active'">
-                    <a th:href="@{/reset-database}"><i class="fas fa-trash-alt"></i> Reset Database</a>
-                </li>          
-                <li class="nav-item" th:classappend="${activePage == 'statistics'} ? 'active'">
-                    <a th:href="@{/statistics}"><i class="fas fa-chart-bar"></i> Statistiques</a>
-                </li>
                 <li class="nav-item">
                     <form th:action="@{/logout}" method="post">
                         <button type="submit" class="nav-link btn btn-link"><i class="fas fa-sign-out-alt"></i> Log Out</button>
