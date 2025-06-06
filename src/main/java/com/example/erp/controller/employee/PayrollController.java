@@ -28,16 +28,28 @@ public class PayrollController {
     private PayrollService payrollService;
 
     @GetMapping
-    public String showPayrollPage(Model model) {
+    public String showPayrollPage(
+            @RequestParam(value = "month", required = false) String month,
+            @RequestParam(value = "year", required = false) String year,
+            Model model) {
         List<Employee> employees = payrollService.getAllEmployees();
         if (employees == null) {
             employees = new ArrayList<>();
             logger.warn("No employees found, setting empty list");
         }
+
+        List<SalarySlip> salarySlips = new ArrayList<>();
+        if (month != null && !month.isEmpty() && year != null && !year.isEmpty()) {
+            salarySlips = payrollService.getFilteredSalarySlips(month, year);
+            if (salarySlips == null) {
+                salarySlips = new ArrayList<>();
+            }
+        }
+
         model.addAttribute("employees", employees);
-        model.addAttribute("salarySlips", new ArrayList<SalarySlip>());
-        model.addAttribute("selectedMonth", "");
-        model.addAttribute("selectedYear", "");
+        model.addAttribute("salarySlips", salarySlips);
+        model.addAttribute("selectedMonth", month != null ? month : "");
+        model.addAttribute("selectedYear", year != null ? year : "");
         return "emp/payroll";
     }
 

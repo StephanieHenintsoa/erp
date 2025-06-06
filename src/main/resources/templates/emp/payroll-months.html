@@ -98,9 +98,29 @@
                             <td th:class="${slip.netPay != null and slip.netPay >= 0} ? 'amount-positive' : 'amount-negative'"
                                 th:text="${slip.netPay != null ? (#numbers.formatDecimal(slip.netPay, 1, 2) + ' €') : '0,00 €'}"></td>
                             <td>
-                                <a href="#" class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i> Voir détails
-                                </a>
+                                <!-- Simplified approach using hidden variables -->
+                                <div th:with="monthName=${#strings.substringBefore(slip.postingDate, ' ')},
+                                             year=${#strings.substringAfter(slip.postingDate, ' ')},
+                                             monthNumber=${monthName == 'Janvier' ? '01' : 
+                                                          monthName == 'Février' ? '02' : 
+                                                          monthName == 'Mars' ? '03' : 
+                                                          monthName == 'Avril' ? '04' : 
+                                                          monthName == 'Mai' ? '05' : 
+                                                          monthName == 'Juin' ? '06' : 
+                                                          monthName == 'Juillet' ? '07' : 
+                                                          monthName == 'Août' ? '08' : 
+                                                          monthName == 'Septembre' ? '09' : 
+                                                          monthName == 'Octobre' ? '10' : 
+                                                          monthName == 'Novembre' ? '11' : '12'}">
+                                    <a th:href="@{/payroll(month=${monthNumber}, year=${year})}"
+                                       class="btn btn-sm btn-success">
+                                        <i class="fas fa-eye"></i> Voir détails salaire net
+                                    </a>
+                                    <a href="#" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> Voir éléments de salaire
+                                    </a>
+                                </div>
+                                
                             </td>
                         </tr>
                         <tr th:if="${salarySlips == null or #lists.isEmpty(salarySlips)}">

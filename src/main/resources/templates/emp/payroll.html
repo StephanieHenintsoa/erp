@@ -114,7 +114,8 @@
                             <th>Département</th>
                             <th>Poste</th>
                             <th>Date de Paie</th>
-                            <th>Salaire brut</th>
+                            <th>Total déductions</th>
+                            <th>Total brut</th>
                             <th>Total Net</th>
                         </tr>
                     </thead>
@@ -152,6 +153,9 @@
                             <!-- Date -->
                             <td th:text="${slip.postingDate != null ? slip.postingDate : 'N/A'}"></td>
                             
+                            <!-- deductions -->
+                            <td th:text="${slip.totalDeduction != null ? (#numbers.formatDecimal(slip.totalDeduction, 1, 2) + ' €') : '0,00 €'}"></td>
+
                             <!-- Gross pay -->
                             <td th:text="${slip.grossPay != null ? (#numbers.formatDecimal(slip.grossPay, 1, 2) + ' €') : '0,00 €'}"></td>
                             
@@ -174,7 +178,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="total-row">
-                            <td colspan="4" class="text-end"><strong>TOTAL:</strong></td>
+                            <td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
                             <td class="total-amount">
                                 <span th:with="totalGross=${#aggregates.sum(salarySlips.![grossPay ?: 0])}"
                                       th:text="${#numbers.formatDecimal(totalGross, 1, 2)} + ' €'"></span>
