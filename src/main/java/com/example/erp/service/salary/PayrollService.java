@@ -20,6 +20,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.example.erp.config.ErpNextConfig;
 import com.example.erp.entity.Employee;
 import com.example.erp.entity.salary.PayrollComponentsResponse;
+import com.example.erp.entity.salary.SalaryEvolutionResponse;
 import com.example.erp.entity.salary.SalarySlip;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -222,6 +223,25 @@ public class PayrollService {
             case "11": return "Novembre";
             case "12": return "Décembre";
             default: return "mois inconnu";
+        }
+    }
+
+    public SalaryEvolutionResponse getSalaryEvolutionData(String year) {
+        HttpHeaders headers = createAuthHeaders();
+        String url = UriComponentsBuilder.fromHttpUrl("http://erpnext.localhost:8000/api/method/hrms.controllers.payroll_controller.get_salary_evolution_data")
+                .queryParam("year", year)
+                .build(false)
+                .toUriString();
+        
+        try {
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<Map> response = restTemplate.exchange(url + ErpNextConfig.PAGINATION_PARAM_FILTRE, HttpMethod.GET, entity, Map.class);
+            Map<String, Object> data = (Map<String, Object>) response.getBody().get("message");
+            SalaryEvolutionResponse evolutionData = objectMapper.convertValue(data, SalaryEvolutionResponse.class);
+            return evolutionData;
+        } catch (Exception e) {
+            logger.error("Error fetching salary evolution data for year {}: {}", year, e.getMessage(), e);
+            throw new RuntimeException("Error fetching salary evolution data: " + e.getMessage(), e);
         }
     }
 }

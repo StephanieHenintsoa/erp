@@ -1,29 +1,415 @@
+
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>ERP Dashboard</title>
-    <!-- Bootstrap -->
+    <title>Tableau de Bord - Évolution des Salaires</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts (Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <!-- Styles personnalisés -->
     <link rel="stylesheet" href="/css/style.css">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .main-container {
+            display: flex;
+        }
+        .content-wrapper {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .chart-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .stats-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .stats-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stats-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div th:replace="fragments/sidebar :: sidebar"></div>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/sidebar :: sidebar(activePage='dashboard')}"></div>
 
-    <!-- Contenu principal -->
-    <div class="content-wrapper">
-        <h1>Bienvenue dans l'ERP-Next New App</h1>
-        <!-- Votre contenu ici -->
+        <!-- Content -->
+        <div class="content-wrapper">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-chart-line"></i> Tableau de Bord - Évolution des Salaires</h1>
+            </div>
+
+            <!-- Year Filter -->
+            <div class="filter-section">
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="year" class="form-label">Année</label>
+                        <select class="form-select" id="year" name="year" onchange="onYearChange()">
+                            <option value="2023" th:selected="${selectedYear == '2023'}">2023</option>
+                            <option value="2024" th:selected="${selectedYear == '2024'}">2024</option>
+                            <option value="2025" th:selected="${selectedYear == '2025'}">2025</option>
+                            <option value="2026" th:selected="${selectedYear == '2026'}">2026</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-primary" onclick="refreshData()">
+                            <i class="fas fa-sync-alt"></i> Actualiser
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="text-center" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-2">Chargement des données...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="alert alert-warning" role="alert" style="display: none;">
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="stats-value" id="totalNetSum">0</div>
+                        <div class="stats-label">Total Net Annuel</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="stats-value" id="avgMonthlyNet">0</div>
+                        <div class="stats-label">Moyenne Mensuelle</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="stats-value" id="activeMonths">0</div>
+                        <div class="stats-label">Mois Actifs</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Single Evolution Chart -->
+            <div class="chart-container" style="height: 500px;">
+                <div class="chart-title">Évolution des Salaires - Total Net, Gains et Déductions par Mois</div>
+                <canvas id="evolutionChart"></canvas>
+            </div>
+        </div>
     </div>
 
     <!-- Footer -->
-    <div th:replace="fragments/footer :: footer"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script th:inline="javascript">
+        // Initialize variables
+        let months = [];
+        let totalNetData = [];
+        let earningsData = {};
+        let deductionsData = {};
+        let currentYear = '2025';
+
+        // Fetch data from API
+        async function fetchSalaryEvolutionData(year) {
+            try {
+                showLoading(true);
+                
+                const response = await fetch(`http://erpnext.localhost:8000/api/method/hrms.controllers.payroll_controller.get_salary_evolution_data?year=${year}&limit_page_length=500`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'token ae80c13a3676603:8fae432b787e7b4',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const monthlyData = data.message.monthly_data;
+                
+                // Process the data
+                processApiData(monthlyData);
+                
+                // Update charts and stats
+                calculateStats();
+                createEvolutionChart();
+                
+                showLoading(false);
+                hideError();
+                
+            } catch (error) {
+                console.error('Error fetching salary evolution data:', error);
+                showError(`Erreur lors de la récupération des données pour l'année ${year}`);
+                showLoading(false);
+            }
+        }
+
+        // Process API data
+        function processApiData(monthlyData) {
+            if (!monthlyData || monthlyData.length === 0) {
+                months = [];
+                totalNetData = [];
+                earningsData = {};
+                deductionsData = {};
+                return;
+            }
+
+            // Reset data arrays
+            months = [];
+            totalNetData = [];
+            const allEarnings = new Set();
+            const allDeductions = new Set();
+
+            // First pass: collect all components and months
+            monthlyData.forEach(monthData => {
+                months.push(monthData.month_short || monthData.month);
+                totalNetData.push(monthData.total_net || 0);
+                
+                if (monthData.earnings) {
+                    Object.keys(monthData.earnings).forEach(key => allEarnings.add(key));
+                }
+                if (monthData.deductions) {
+                    Object.keys(monthData.deductions).forEach(key => allDeductions.add(key));
+                }
+            });
+
+            // Initialize earnings data
+            earningsData = {};
+            allEarnings.forEach(component => {
+                earningsData[component] = [];
+            });
+
+            // Initialize deductions data
+            deductionsData = {};
+            allDeductions.forEach(component => {
+                deductionsData[component] = [];
+            });
+
+            // Second pass: populate data arrays
+            monthlyData.forEach(monthData => {
+                // Populate earnings
+                allEarnings.forEach(component => {
+                    const value = monthData.earnings && monthData.earnings[component] ? monthData.earnings[component] : 0;
+                    earningsData[component].push(value);
+                });
+
+                // Populate deductions
+                allDeductions.forEach(component => {
+                    const value = monthData.deductions && monthData.deductions[component] ? monthData.deductions[component] : 0;
+                    deductionsData[component].push(value);
+                });
+            });
+        }
+
+        // Show/hide loading indicator
+        function showLoading(show) {
+            const loadingDiv = document.getElementById('loadingIndicator');
+            if (loadingDiv) {
+                loadingDiv.style.display = show ? 'block' : 'none';
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            if (errorDiv) {
+                errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        // Hide error message
+        function hideError() {
+            const errorDiv = document.getElementById('errorMessage');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        }
+
+        // Format currency
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('fr-MG', {
+                style: 'currency',
+                currency: 'MGA',
+                minimumFractionDigits: 0
+            }).format(value);
+        }
+
+        // Calculate and display statistics
+        function calculateStats() {
+            if (!totalNetData || totalNetData.length === 0) {
+                document.getElementById('totalNetSum').textContent = formatCurrency(0);
+                document.getElementById('avgMonthlyNet').textContent = formatCurrency(0);
+                document.getElementById('activeMonths').textContent = '0';
+                return;
+            }
+
+            const totalSum = totalNetData.reduce((sum, val) => sum + (val || 0), 0);
+            const activeMonths = totalNetData.filter(val => val && val > 0).length;
+            const avgMonthly = activeMonths > 0 ? totalSum / activeMonths : 0;
+
+            document.getElementById('totalNetSum').textContent = formatCurrency(totalSum);
+            document.getElementById('avgMonthlyNet').textContent = formatCurrency(avgMonthly);
+            document.getElementById('activeMonths').textContent = activeMonths;
+        }
+
+        // Create Single Evolution Chart with all lines
+        function createEvolutionChart() {
+            const chartContainer = document.getElementById('evolutionChart');
+            if (!chartContainer) return;
+
+            // Destroy existing chart if it exists
+            if (window.evolutionChartInstance) {
+                window.evolutionChartInstance.destroy();
+            }
+
+            // Check if we have data
+            if (!months || months.length === 0) {
+                chartContainer.innerHTML = '<p class="text-center text-muted">Aucune donnée disponible pour cette année</p>';
+                return;
+            }
+
+            const ctx = chartContainer.getContext('2d');
+            const datasets = [];
+            
+            // Add Total Net line (thicker, different style)
+            datasets.push({
+                label: 'Total Net',
+                data: totalNetData,
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                borderWidth: 4,
+                fill: false,
+                tension: 0.4,
+                borderDash: []
+            });
+
+            // Add Earnings lines
+            const earningsComponents = Object.keys(earningsData || {});
+            const earningsColors = ['#28a745', '#20c997', '#17a2b8', '#6f42c1', '#e83e8c'];
+            
+            earningsComponents.forEach((component, index) => {
+                datasets.push({
+                    label: `📈 ${component}`,
+                    data: earningsData[component],
+                    borderColor: earningsColors[index % earningsColors.length],
+                    backgroundColor: earningsColors[index % earningsColors.length] + '20',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    borderDash: []
+                });
+            });
+
+            // Add Deductions lines (dashed)
+            const deductionsComponents = Object.keys(deductionsData || {});
+            const deductionsColors = ['#dc3545', '#fd7e14', '#ffc107', '#6c757d', '#343a40'];
+            
+            deductionsComponents.forEach((component, index) => {
+                datasets.push({
+                    label: `📉 ${component}`,
+                    data: deductionsData[component],
+                    borderColor: deductionsColors[index % deductionsColors.length],
+                    backgroundColor: deductionsColors[index % deductionsColors.length] + '20',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    borderDash: [5, 5] // Dashed line for deductions
+                });
+            });
+
+            window.evolutionChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Make sure currentYear is properly set
+        function onYearChange() {
+            const yearSelect = document.getElementById('year');
+            currentYear = yearSelect.value || '2025'; // Fallback to 2025 if empty
+            fetchSalaryEvolutionData(currentYear);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure currentYear is not null
+            if (!currentYear || currentYear === 'null') {
+                currentYear = '2025';
+            }
+            fetchSalaryEvolutionData(currentYear);
+        });
+    </script>
 </body>
 </html>

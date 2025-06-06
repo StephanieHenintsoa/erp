@@ -125,6 +125,12 @@ public class PayrollController {
         return "emp/payroll-months";
     }
 
+    @GetMapping("/dashboard")
+    public String showDashboard(@RequestParam(value = "year", defaultValue = "2025") String year, Model model) {
+        model.addAttribute("selectedYear", year);
+        return "home/dashboard";
+    }
+
     public String getMonthName(String monthNumber) {
         if (monthNumber == null || monthNumber.isEmpty()) {
             return "tous les mois";
