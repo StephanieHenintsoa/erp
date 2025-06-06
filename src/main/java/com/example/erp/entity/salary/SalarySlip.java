@@ -1,11 +1,8 @@
 package com.example.erp.entity.salary;
 
-import com.example.erp.entity.salary.SalaryDetail;
-
-import java.beans.Transient;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.itextpdf.layout.element.List;
 
 public class SalarySlip {
 
@@ -38,6 +35,29 @@ public class SalarySlip {
 
     @JsonProperty("employee")
     private String employee;
+
+    @JsonProperty("earnings")
+    private List<SalaryDetail> earnings;
+
+    @JsonProperty("deductions")
+    private List<SalaryDetail> deductions;
+
+    // Add getters and setters
+    public List<SalaryDetail> getEarnings() {
+        return earnings;
+    }
+
+    public void setEarnings(List<SalaryDetail> earnings) {
+        this.earnings = earnings;
+    }
+
+    public List<SalaryDetail> getDeductions() {
+        return deductions;
+    }
+
+    public void setDeductions(List<SalaryDetail> deductions) {
+        this.deductions = deductions;
+    }
 
     // Getters and Setters pour les nouveaux champs
     public String getEmployee() {

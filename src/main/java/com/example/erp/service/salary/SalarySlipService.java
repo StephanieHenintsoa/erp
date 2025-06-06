@@ -1,11 +1,10 @@
 package com.example.erp.service.salary;
 
-import com.example.erp.config.ErpNextConfig;
-import com.example.erp.dto.salary.SalarySlipResponse;
-import com.example.erp.dto.salary.SingleSalarySlipResponse;
-import com.example.erp.entity.salary.SalarySlip;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +17,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import com.example.erp.config.ErpNextConfig;
+import com.example.erp.dto.salary.SalarySlipResponse;
+import com.example.erp.dto.salary.SingleSalarySlipResponse;
+import com.example.erp.entity.salary.SalarySlip;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class SalarySlipService {
@@ -77,7 +75,6 @@ public class SalarySlipService {
             ResponseEntity<SalarySlipResponse> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, SalarySlipResponse.class);
             return response.getBody() != null ? response.getBody().getData() : new ArrayList<>();
         } catch (JsonProcessingException e) {
-            logger.error("Error processing JSON for ERPNext Salary Slip API call", e);
             throw new RuntimeException("Error processing JSON for ERPNext Salary Slip API call", e);
         }
     }
@@ -122,10 +119,8 @@ public class SalarySlipService {
             return response.getBody() != null ? response.getBody().getData() : new ArrayList<>();
             
         } catch (JsonProcessingException e) {
-            logger.error("Error processing JSON for ERPNext Salary Slip API call", e);
             throw new RuntimeException("Error processing JSON for ERPNext Salary Slip API call", e);
         } catch (Exception e) {
-            logger.error("Error fetching salary slips for employee: {} on date: {}", employee, payslipDate, e);
             throw new RuntimeException("Error fetching salary slips for employee: " + employee + " on date: " + payslipDate, e);
         }
     }
@@ -134,7 +129,6 @@ public class SalarySlipService {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "token " + ErpNextConfig.API_KEY + ":" + ErpNextConfig.API_SECRET);
         headers.set("Content-Type", "application/json");
-        System.out.println("Atooooooooooo tafiditra");
     
         List<String> fieldsList = Arrays.asList(
             "name", "posting_date", "start_date", "end_date", "status",
@@ -142,13 +136,11 @@ public class SalarySlipService {
         );
     
         try {
-            System.out.println("Ato am tryyyy");
     
             String fieldsJson = objectMapper.writeValueAsString(fieldsList);
     
             // Construction manuelle de l'URL sans encoder le path (le nom contient des espaces)
             String baseUrl = ErpNextConfig.ERP_NEXT_API_SALARY_SLIP_URL + "/" + name;
-            System.out.println("Url ==> " + baseUrl);
     
             // UriComponentsBuilder va encoder uniquement les query params (ce qu'on veut)
             UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl)
@@ -156,9 +148,8 @@ public class SalarySlipService {
     
             String finalUrl = builder.build(false).toUriString(); // false → ne pas encoder le chemin
     
-            System.out.println("finalUrl ==> " + finalUrl);
     
-            logger.debug("Fetching salary slip from ERP Next: {}", finalUrl);
+            System.out.println("Fetching salary slip from ERP Next: {}" + finalUrl);
     
             HttpEntity<String> entity = new HttpEntity<>(headers);
     
@@ -167,7 +158,7 @@ public class SalarySlipService {
             );
     
             if (response.getBody() != null && response.getBody().getData() != null) {
-                logger.debug("Salary slip retrieved: {}", response.getBody().getData().getName());
+                System.out.println("Salary slip retrieved: {}" + response.getBody().getData().getName());
                 return response.getBody().getData();
             } else {
                 logger.warn("No salary slip found for name: {}", name);
@@ -175,16 +166,14 @@ public class SalarySlipService {
             }
     
         } catch (HttpClientErrorException e) {
-            logger.error("Client error fetching salary slip for name: {}, status: {}", name, e.getStatusCode(), e);
             return null;
         } catch (JsonProcessingException e) {
-            logger.error("Error processing JSON for ERPNext Salary Slip API call: {}", name, e);
             throw new RuntimeException("Error processing JSON for ERPNext Salary Slip API call", e);
         } catch (Exception e) {
-            logger.error("Unexpected error fetching salary slip for name: {}", name, e);
             throw new RuntimeException("Failed to fetch salary slip", e);
         }
     }
+
     public List<SalarySlip> getSalarySlipsByEmployeeAndMonthYear(String employee, String month, String year) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "token " + ErpNextConfig.API_KEY + ":" + ErpNextConfig.API_SECRET);
@@ -250,13 +239,57 @@ public class SalarySlipService {
             return response.getBody() != null ? response.getBody().getData() : new ArrayList<>();
     
         } catch (JsonProcessingException e) {
-            logger.error("Error processing JSON for ERPNext Salary Slip API call", e);
             throw new RuntimeException("Error processing JSON for ERPNext Salary Slip API call", e);
         } catch (Exception e) {
-            logger.error("Error fetching salary slips for employee: {} for month: {}/{}", employee, month, year, e);
             throw new RuntimeException("Error fetching salary slips for employee: " + employee + " for month: " + month + "/" + year, e);
         }
     }
+
+    public SalarySlip getSalarySlipWithDetails(String name) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "token " + ErpNextConfig.API_KEY + ":" + ErpNextConfig.API_SECRET);
+        headers.set("Content-Type", "application/json");
+
+        List<String> fieldsList = Arrays.asList(
+            "name", "employee", "employee_name", "gross_pay", "net_pay", "earnings", "deductions"
+        );
+
+        try {
+            String fieldsJson = objectMapper.writeValueAsString(fieldsList);
+            String baseUrl = ErpNextConfig.ERP_NEXT_API_SALARY_SLIP_URL + "/" + name;
+            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                    .queryParam("fields", fieldsJson);
+
+            String finalUrl = builder.build(false).toUriString();
+            System.out.println("Fetching salary slip details from: {}" + finalUrl);
+            
+            
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<SingleSalarySlipResponse> response = restTemplate.exchange(
+                finalUrl, HttpMethod.GET, entity, SingleSalarySlipResponse.class
+            );
+
+            if (response.getBody() != null && response.getBody().getData() != null) {
+                System.out.println("Successfully retrieved salary slip details for: {}" + name);
+                return response.getBody().getData();
+            } else {
+                logger.warn("No salary slip details found for: {}", name);
+                return null;
+            }
+
+        } catch (HttpClientErrorException e) {
+            logger.error("HTTP error fetching salary slip details for {}: {} - {}", name, e.getStatusCode(), e.getResponseBodyAsString());
+            return null;
+        } catch (JsonProcessingException e) {
+            logger.error("JSON processing error for salary slip {}: {}", name, e.getMessage());
+            throw new RuntimeException("Error processing JSON for ERPNext Salary Slip API call", e);
+        } catch (Exception e) {
+            logger.error("Unexpected error fetching salary slip details for {}: {}", name, e.getMessage());
+            throw new RuntimeException("Failed to fetch salary slip with details: " + e.getMessage(), e);
+        }
+    }
+
     // Utility method to calculate the last day of a given month and year
     private int getLastDayOfMonth(int month, int year) {
         switch (month) {

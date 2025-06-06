@@ -99,7 +99,6 @@ public class EmployeeService {
 
             String finalUrl = builder.build(false).toUriString();
             HttpEntity<String> entity = new HttpEntity<>(headers);
-            // ResponseEntity<String> rawResponse = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, String.class);
             ResponseEntity<SingleEmployeeResponse> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, SingleEmployeeResponse.class);
             Employee employee = response.getBody().getData();
             return employee;
