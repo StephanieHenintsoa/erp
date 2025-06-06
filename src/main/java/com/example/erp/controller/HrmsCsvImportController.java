@@ -40,26 +40,26 @@ public class HrmsCsvImportController {
             HttpSession session) {
         try {
             HrmsCsvImportResponse response = hrmsCsvImportService.importCsvFiles(
-                    employeesCsv, salaryStructureCsv, payrollCsv, session);
+                    employeesCsv, salaryStructureCsv, payrollCsv);
 
             logger.debug("Response: status={}, success={}, message={}, validation_errors={}",
                     response.getStatus(), response.isSuccess(), response.getMessage(), response.getValidation_errors());
-            logger.info("Model attributes: err={}, validationErrors={}",
-                    model.getAttribute("err"), model.getAttribute("validationErrors"));
+            logger.info("Model attributes: error={}, validationErrors={}",
+                    model.getAttribute("error"), model.getAttribute("validationErrors"));
 
             if ("success".equals(response.getStatus()) || response.isSuccess()) {
                 model.addAttribute("success", response.getMessageAsString());
                 model.addAttribute("insertedRecords", response.getInserted_records());
             } else {
-                model.addAttribute("err", response.getMessageAsString());
+                model.addAttribute("error", response.getMessageAsString());
                 model.addAttribute("validationErrors", response.getValidation_errors() != null ? response.getValidation_errors() : new java.util.ArrayList<>());
             }
         } catch (IllegalStateException e) {
             logger.warn("Authentication error: {}", e.getMessage());
             return "redirect:/payroll";
         } catch (Exception e) {  
-            logger.error("Error importing CSV files", e);
-            model.addAttribute("err", "An error occurred while importing CSV files: " + e.getMessage());
+            logger.error("Error importing CSV files", e );
+            model.addAttribute("error", "An error occurred while importing CSV files: " + e.getMessage());
             model.addAttribute("validationErrors", new java.util.ArrayList<>());
         }
         return "views/hrms-csv-import/hrms-csv-import";
@@ -68,7 +68,7 @@ public class HrmsCsvImportController {
     @PostMapping("/reset") 
     public String resetHrmsData(Model model, HttpSession session) {
         try {
-            HrmsResetResponse response = hrmsCsvImportService.resetHrmsData(session);
+            HrmsResetResponse response = hrmsCsvImportService.resetHrmsData();
 
             logger.debug("Reset Response: success={}, message={}, errors={}, deleted_records={}",
                     response.isSuccess(), response.getMessage(), response.getErrors(), response.getDeleted_records());
@@ -77,7 +77,7 @@ public class HrmsCsvImportController {
                 model.addAttribute("success", response.getMessageAsString());
                 model.addAttribute("deletedRecords", response.getDeleted_records());
             } else {
-                model.addAttribute("err", response.getMessageAsString());
+                model.addAttribute("error", response.getMessageAsString());
                 model.addAttribute("resetErrors", response.getErrors() != null ? response.getErrors() : new java.util.ArrayList<>());
             }
         } catch (IllegalStateException e) {
@@ -85,7 +85,7 @@ public class HrmsCsvImportController {
             return "redirect:/payroll";
         } catch (Exception e) {
             logger.error("Error resetting HRMS data", e);
-            model.addAttribute("err", "An error occurred while resetting HRMS data: " + e.getMessage());
+            model.addAttribute("error", "An error occurred while resetting HRMS data: " + e.getMessage());
             model.addAttribute("resetErrors", new java.util.ArrayList<>());
         }
         return "views/hrms-csv-import/hrms-csv-import";

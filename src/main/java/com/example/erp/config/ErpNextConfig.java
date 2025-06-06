@@ -20,7 +20,8 @@ public class ErpNextConfig {
     public static final String API_KEY = "c2626e78b79c88b";
     public static final String API_SECRET = "1a90aa5401c94b4";
 
-    // ENDPOINTS 
+    // ENDPOINTS  
+    public static final String ERP_NEXT_API_BASE_URL = "http://erpnext.localhost:8000/api/method/";
     public static final String ERP_NEXT_API_EMPLOYEE_URL = "http://erpnext.localhost:8000/api/resource/Employee";  
     public static final String ERP_NEXT_API_DEPARTMENT_URL = "http://erpnext.localhost:8000/api/resource/Department";  
     public static final String ERP_NEXT_API_DESIGNATION_URL = "http://erpnext.localhost:8000/api/resource/Designation";

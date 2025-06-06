@@ -1,20 +1,20 @@
 package com.example.erp.service;
 
-
+import com.example.erp.config.ErpNextConfig;
 import com.example.erp.entity.HrmsCsvImportRequest;
 import com.example.erp.entity.HrmsCsvImportResponse;
 import com.example.erp.entity.HrmsResetResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpSession;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Base64;
 
@@ -24,60 +24,56 @@ public class HrmsCsvImportService {
     private static final Logger logger = LoggerFactory.getLogger(HrmsCsvImportService.class);
 
     @Autowired
-    private WebClient.Builder webClientBuilder;
+    private RestTemplate restTemplate;
 
-    @Value("${api.method}")
-    private String baseApiUrl;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    // Base API URL from configuration
+    private final String baseApiUrl = ErpNextConfig.ERP_NEXT_API_BASE_URL;
 
-    public HrmsCsvImportResponse importCsvFiles(MultipartFile employeesCsv, MultipartFile salaryStructureCsv, 
-                                               MultipartFile payrollCsv, HttpSession session) throws Exception {
-        String accessToken = (String) session.getAttribute("access_token");
-        String sid = (String) session.getAttribute("sid");
+    public HrmsCsvImportResponse importCsvFiles(MultipartFile employeesCsv, MultipartFile salaryStructureCsv,
+                                               MultipartFile payrollCsv) throws Exception {
+        // Prepare headers with API key and secret
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "token " + ErpNextConfig.API_KEY + ":" + ErpNextConfig.API_SECRET);
+        headers.set("Content-Type", "application/json");
 
-        if (accessToken == null || sid == null) {
-            throw new IllegalStateException("User is not authenticated");
-        }
-
-        
+        // Prepare request body
         HrmsCsvImportRequest request = new HrmsCsvImportRequest();
         if (employeesCsv != null && !employeesCsv.isEmpty()) {
             request.setEmployeesCsv(Base64.getEncoder().encodeToString(employeesCsv.getBytes()));
-            System.out.println("employeesCsv encoded, size: " + employeesCsv.getSize());
+            logger.debug("employeesCsv encoded, size: {}", employeesCsv.getSize());
         }
         if (salaryStructureCsv != null && !salaryStructureCsv.isEmpty()) {
             request.setSalaryStructureCsv(Base64.getEncoder().encodeToString(salaryStructureCsv.getBytes()));
-            System.out.println("salaryStructureCsv encoded, size: "+ salaryStructureCsv.getSize());
+            logger.debug("salaryStructureCsv encoded, size: {}", salaryStructureCsv.getSize());
         }
         if (payrollCsv != null && !payrollCsv.isEmpty()) {
             request.setPayrollCsv(Base64.getEncoder().encodeToString(payrollCsv.getBytes()));
-            System.out.println("payrollCsv encoded, size: "+ payrollCsv.getSize());
+            logger.debug("payrollCsv encoded, size: {}", payrollCsv.getSize());
         }
 
+        // Define API endpoint
         String url = baseApiUrl + "/hrms.controllers.hrms_controller.import_csvs_from_json";
-        WebClient client = webClientBuilder.baseUrl(url).build();
+        System.out.println("Chemin==>"+url);
 
         try {
+            // Serialize request to JSON
             String requestBody = objectMapper.writeValueAsString(request);
-            System.out.println("Sending request to {} with body: "+ requestBody);
+            logger.debug("Sending request to {} with body: {}", url, requestBody);
 
-            ResponseEntity<String> response = client.post()
-                    .header("Authorization", "Bearer " + accessToken)
-                    .cookie("sid", sid)
-                    .header("Content-Type", "application/json")
-                    .bodyValue(requestBody)
-                    .retrieve()
-                    .toEntity(String.class)
-                    .block();
+            // Make API call
+            HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+            ResponseEntity<HrmsCsvImportResponse> response = restTemplate.exchange(
+                    url, HttpMethod.POST, entity, HrmsCsvImportResponse.class);
 
-            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                System.out.println("Received response: " + response.getBody());
-                HrmsCsvImportResponse hrmsResponse = objectMapper.readValue(response.getBody(), HrmsCsvImportResponse.class);
-                return hrmsResponse;
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                logger.debug("Received response: {}", response.getBody());
+                return response.getBody();
             }
 
-            System.out.println("Received null or unsuccessful response:"+ response);
+            logger.warn("Received null or unsuccessful response: {}", response);
             HrmsCsvImportResponse errorResponse = new HrmsCsvImportResponse();
             errorResponse.setSuccess(false);
             errorResponse.setMessage("Failed to import CSV files");
@@ -91,36 +87,27 @@ public class HrmsCsvImportService {
             return errorResponse;
         }
     }
-    public HrmsResetResponse resetHrmsData(HttpSession session) throws Exception {
 
-        String accessToken = (String) session.getAttribute("access_token");
-        System.out.println("Access token=="+accessToken);
-        String sid = (String) session.getAttribute("sid");
-        System.out.println("siddd==>"+sid);
+    public HrmsResetResponse resetHrmsData() throws Exception {
+        // Prepare headers with API key and secret
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "token " + ErpNextConfig.API_KEY + ":" + ErpNextConfig.API_SECRET);
+        headers.set("Content-Type", "application/json");
 
-        System.out.println("atoooooooo");
-        if (accessToken == null || sid == null) {
-            throw new IllegalStateException("User is not authenticated");
-        }
-        System.out.println("atoooooo2222oo");
-
+        // Define API endpoint
         String url = baseApiUrl + "/hrms.controllers.hrms_reset_controller.reset_hrms_data";
-        System.out.println("Url===>"+url);
-        WebClient client = webClientBuilder.baseUrl(url).build();
 
         try {
-            System.out.println("Reset en cours===");
-            ResponseEntity<String> response = client.post()
-                    .header("Authorization", "Bearer " + accessToken)
-                    .cookie("sid", sid)
-                    .header("Content-Type", "application/json")
-                    .retrieve()
-                    .toEntity(String.class)
-                    .block();
+            logger.debug("Sending reset request to {}", url);
 
-            if (response != null && response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            // Make API call
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<HrmsResetResponse> response = restTemplate.exchange(
+                    url, HttpMethod.POST, entity, HrmsResetResponse.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 logger.info("Received reset response: {}", response.getBody());
-                return objectMapper.readValue(response.getBody(), HrmsResetResponse.class);
+                return response.getBody();
             }
 
             logger.warn("Received null or unsuccessful response: {}", response);
@@ -128,7 +115,6 @@ public class HrmsCsvImportService {
             errorResponse.setSuccess(false);
             errorResponse.setMessage("Failed to reset HRMS data");
             return errorResponse;
-
         } catch (Exception e) {
             logger.error("Error resetting HRMS data", e);
             HrmsResetResponse errorResponse = new HrmsResetResponse();
