@@ -39,6 +39,12 @@
             font-size: 1.1em;
             font-weight: bold;
         }
+        .employee-group {
+            border-left: 3px solid #007bff;
+        }
+        .same-employee {
+            background-color: #f8f9fa;
+        }
     </style>
 </head>
 <body>
@@ -107,32 +113,68 @@
                             <th>Employé</th>
                             <th>Département</th>
                             <th>Poste</th>
-                            <th>Salaire brut</th> <!-- remplacé "Éléments de salaire" par "Salaire brut" -->
+                            <th>Date de Paie</th>
+                            <th>Salaire brut</th>
                             <th>Total Net</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="employee : ${employees}">
-                            <td th:text="${employee.employeeName} ?: 'N/A'"></td>
-                            <td th:text="${employee.department} ?: 'N/A'"></td>
-                            <td th:text="${employee.designation} ?: 'N/A'"></td>
+                        <!-- Loop through salary slips instead of employees -->
+                        <tr th:each="slip, slipStat : ${salarySlips}" 
+                            th:class="${slipStat.index > 0 and salarySlips[slipStat.index - 1].employee == slip.employee} ? 'same-employee' : ''">
+                            
+                            <!-- Employee info from the employees list -->
                             <td>
-                                <span th:each="slip : ${salarySlips}" th:if="${slip.employee == employee.name}"
-                                      th:text="${slip.grossPay != null} ? (${slip.grossPay} + ' €') : '0,00 €'"></span>
+                                <span th:each="emp : ${employees}" 
+                                      th:if="${emp.name == slip.employee}" 
+                                      th:text="${emp.employeeName}" 
+                                      th:remove="tag"></span>
+                                <span th:unless="${#lists.contains(employees.![name], slip.employee)}" 
+                                      th:text="${slip.employee}"></span>
                             </td>
                             <td>
-                                <span th:each="slip : ${salarySlips}" th:if="${slip.employee == employee.name}"
-                                      th:class="${slip.netPay != null and slip.netPay >= 0} ? 'amount-positive' : 'amount-negative'"
-                                      th:text="${slip.netPay != null} ? (${slip.netPay} + ' €') : '0,00 €'"></span>
+                                <span th:each="emp : ${employees}" 
+                                      th:if="${emp.name == slip.employee}" 
+                                      th:text="${emp.department}" 
+                                      th:remove="tag"></span>
+                                <span th:unless="${#lists.contains(employees.![name], slip.employee)}" 
+                                      th:text="'N/A'"></span>
                             </td>
+                            <td>
+                                <span th:each="emp : ${employees}" 
+                                      th:if="${emp.name == slip.employee}" 
+                                      th:text="${emp.designation}" 
+                                      th:remove="tag"></span>
+                                <span th:unless="${#lists.contains(employees.![name], slip.employee)}" 
+                                      th:text="'N/A'"></span>
+                            </td>
+                            
+                            <!-- Date -->
+                            <td th:text="${slip.postingDate != null ? slip.postingDate : 'N/A'}"></td>
+                            
+                            <!-- Gross pay -->
+                            <td th:text="${slip.grossPay != null ? (#numbers.formatDecimal(slip.grossPay, 1, 2) + ' €') : '0,00 €'}"></td>
+                            
+                            <!-- Net pay -->
+                            <td th:class="${slip.netPay != null and slip.netPay >= 0} ? 'amount-positive' : 'amount-negative'"
+                                th:text="${slip.netPay != null ? (#numbers.formatDecimal(slip.netPay, 1, 2) + ' €') : '0,00 €'}"></td>
                         </tr>
-                        <tr th:if="${employees == null or #lists.isEmpty(employees)}">
-                            <td colspan="5" class="text-center">Aucun employé trouvé</td>
+                        
+                        <!-- Show message when no salary slips found -->
+                        <tr th:if="${salarySlips == null or #lists.isEmpty(salarySlips)}">
+                            <td colspan="6" class="text-center">
+                                <span th:if="${selectedMonth != null and !selectedMonth.isEmpty() or selectedYear != null and !selectedYear.isEmpty()}">
+                                    Aucune fiche de paie trouvée pour la période sélectionnée
+                                </span>
+                                <span th:unless="${selectedMonth != null and !selectedMonth.isEmpty() or selectedYear != null and !selectedYear.isEmpty()}">
+                                    Aucune fiche de paie disponible
+                                </span>
+                            </td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr class="total-row">
-                            <td colspan="3" class="text-end"><strong>TOTAL:</strong></td>
+                            <td colspan="4" class="text-end"><strong>TOTAL:</strong></td>
                             <td class="total-amount">
                                 <span th:with="totalGross=${#aggregates.sum(salarySlips.![grossPay ?: 0])}"
                                       th:text="${#numbers.formatDecimal(totalGross, 1, 2)} + ' €'"></span>
