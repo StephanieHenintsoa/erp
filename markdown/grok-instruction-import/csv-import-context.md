@@ -308,3 +308,547 @@ Mitigation:
 
 1. **Flexibility Over Assumptions**: Design for variability rather than specific data patterns
 2. **Validation First Approach**: Validate everything before committing any data
+
+
+/* ----------------------------------------- */
+/* ----------------------------------------- */
+
+in your implementations you need to use those existing class in the Spring Boot App : 
+
+--
+--
+--
+
+package com.example.erp.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+
+@Configuration
+public class ErpNextConfig {
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    // ADMIN CREDENTIALS
+    public static final String ADMIN_USERNAME = "Administrator";
+    public static final String ADMIN_PASSWORD = "admin";
+
+    // API KEY
+    public static final String API_KEY = "ae80c13a3676603";
+    public static final String API_SECRET = "6ff142270f3a856";
+
+    // ENDPOINTS 
+    public static final String ERP_NEXT_API_EMPLOYEE_URL = "http://erpnext.localhost:8000/api/resource/Employee";  
+    public static final String ERP_NEXT_API_DEPARTMENT_URL = "http://erpnext.localhost:8000/api/resource/Department";  
+    public static final String ERP_NEXT_API_DESIGNATION_URL = "http://erpnext.localhost:8000/api/resource/Designation";  
+}
+
+--
+--
+--
+
+package com.example.erp.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.multipart.support.StandardServletMultipartResolver;
+
+@Configuration
+public class FileUploadConfig {
+
+    @Bean(name = "multipartResolver")
+    public StandardServletMultipartResolver multipartResolver() {
+        StandardServletMultipartResolver resolver = new StandardServletMultipartResolver();
+        return resolver;
+    }
+}
+
+--
+--
+--
+
+package com.example.erp.entity;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+@Entity
+public class CsvImportError {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String fileName;
+    private int lineNumber;
+    private String errorDescription;
+    private LocalDateTime timestamp;
+
+    // Constructors
+    public CsvImportError() {
+    }
+
+    public CsvImportError(String fileName, int lineNumber, String errorDescription, LocalDateTime timestamp) {
+        this.fileName = fileName;
+        this.lineNumber = lineNumber;
+        this.errorDescription = errorDescription;
+        this.timestamp = timestamp;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public int getLineNumber() {
+        return lineNumber;
+    }
+
+    public void setLineNumber(int lineNumber) {
+        this.lineNumber = lineNumber;
+    }
+
+    public String getErrorDescription() {
+        return errorDescription;
+    }
+
+    public void setErrorDescription(String errorDescription) {
+        this.errorDescription = errorDescription;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+}
+
+
+
+--
+--
+--
+
+package com.example.erp.service.api;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
+
+import com.example.erp.entity.CsvImportError;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+@Service
+public class ErpNextApiService {
+
+    @Value("${erpnext.api.url}")
+    private String erpNextUrl;
+
+    @Value("${erpnext.api.username}")
+    private String username;
+
+    @Value("${erpnext.api.password}")
+    private String password;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RestTemplate restTemplate;
+    
+    // Store session cookies for subsequent requests
+    private String sessionCookies;
+    private long lastLoginTime = 0;
+    private static final long SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+    @Autowired
+    public ErpNextApiService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    // Login and get session cookies
+    private boolean loginAndGetSession() {
+        try {
+            Map<String, String> requestBody = new HashMap<>();
+            requestBody.put("usr", username);
+            requestBody.put("pwd", password);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                erpNextUrl + "/api/method/login",
+                HttpMethod.POST,
+                request,
+                String.class
+            );
+
+            // Extract cookies from response
+            List<String> cookies = response.getHeaders().get("Set-Cookie");
+            if (cookies != null && !cookies.isEmpty()) {
+                sessionCookies = String.join("; ", cookies);
+                lastLoginTime = System.currentTimeMillis();
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            System.err.println("Login failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Check if session is valid and login if necessary
+    private boolean ensureAuthenticated() {
+        long currentTime = System.currentTimeMillis();
+        
+        // If no session or session expired, login again
+        if (sessionCookies == null || (currentTime - lastLoginTime) > SESSION_TIMEOUT) {
+            return loginAndGetSession();
+        }
+        return true;
+    }
+
+    // Create authenticated headers with session cookies
+    private HttpHeaders createAuthenticatedHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        if (sessionCookies != null) {
+            headers.set("Cookie", sessionCookies);
+        }
+        
+        return headers;
+    }
+
+    // Create a record in ERPNext
+    public boolean createRecord(String docType, Map<String, Object> data, List<CsvImportError> errors) {
+        try {
+            if (!ensureAuthenticated()) {
+                errors.add(new CsvImportError(docType + ".csv", 0, "Failed to authenticate with ERPNext", LocalDateTime.now()));
+                return false;
+            }
+
+            HttpHeaders headers = createAuthenticatedHeaders();
+            String json = objectMapper.writeValueAsString(data);
+            HttpEntity<String> request = new HttpEntity<>(json, headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                erpNextUrl + "/api/resource/" + docType,
+                HttpMethod.POST,
+                request,
+                String.class
+            );
+            
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            // If we get 403, try to re-login once
+            if (e.getStatusCode().value() == 403) {
+                sessionCookies = null; // Force re-login
+                if (ensureAuthenticated()) {
+                    return createRecord(docType, data, errors); // Retry once
+                }
+            }
+            
+            String errorMessage = e.getResponseBodyAsString();
+            try {
+                Map<String, Object> errorResponse = objectMapper.readValue(errorMessage, Map.class);
+                String serverMessage = errorResponse.getOrDefault("_error_message", e.getMessage()).toString();
+                errors.add(new CsvImportError(docType + ".csv", 0, "API error creating record: " + serverMessage, LocalDateTime.now()));
+            } catch (Exception ex) {
+                errors.add(new CsvImportError(docType + ".csv", 0, "API error creating record: " + e.getStatusCode() + " - " + e.getMessage(), LocalDateTime.now()));
+            }
+            return false;
+        } catch (Exception e) {
+            errors.add(new CsvImportError(docType + ".csv", 0, "API error creating record: " + e.getMessage(), LocalDateTime.now()));
+            return false;
+        }
+    }
+
+    // Retrieve a record from ERPNext
+    public Map<String, Object> getRecord(String docType, String name, List<CsvImportError> errors) {
+        try {
+            if (!ensureAuthenticated()) {
+                errors.add(new CsvImportError(docType + ".csv", 0, "Failed to authenticate with ERPNext", LocalDateTime.now()));
+                return null;
+            }
+
+            HttpHeaders headers = createAuthenticatedHeaders();
+            HttpEntity<String> request = new HttpEntity<>(headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                erpNextUrl + "/api/resource/" + docType + "/" + name,
+                HttpMethod.GET,
+                request,
+                Map.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return response.getBody();
+            }
+            errors.add(new CsvImportError(docType + ".csv", 0, "Failed to retrieve record: " + name, LocalDateTime.now()));
+            return null;
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 404) {
+                errors.add(new CsvImportError(docType + ".csv", 0, "Record not found: " + name, LocalDateTime.now()));
+                return null;
+            }
+            if (e.getStatusCode().value() == 403) {
+                sessionCookies = null; // Force re-login
+                if (ensureAuthenticated()) {
+                    return getRecord(docType, name, errors); // Retry once
+                }
+            }
+            String errorMessage = e.getResponseBodyAsString();
+            try {
+                Map<String, Object> errorResponse = objectMapper.readValue(errorMessage, Map.class);
+                String serverMessage = errorResponse.getOrDefault("_error_message", e.getMessage()).toString();
+                errors.add(new CsvImportError(docType + ".csv", 0, "API error retrieving record: " + serverMessage, LocalDateTime.now()));
+            } catch (Exception ex) {
+                errors.add(new CsvImportError(docType + ".csv", 0, "API error retrieving record: " + e.getStatusCode() + " - " + e.getMessage(), LocalDateTime.now()));
+            }
+            return null;
+        } catch (Exception e) {
+            errors.add(new CsvImportError(docType + ".csv", 0, "API error retrieving record: " + e.getMessage(), LocalDateTime.now()));
+            return null;
+        }
+    }
+
+    // Update a record in ERPNext
+    public boolean updateRecord(String docType, String name, Map<String, Object> data, List<CsvImportError> errors) {
+        try {
+            if (!ensureAuthenticated()) {
+                errors.add(new CsvImportError(docType + ".csv", 0, "Failed to authenticate with ERPNext", LocalDateTime.now()));
+                return false;
+            }
+
+            HttpHeaders headers = createAuthenticatedHeaders();
+            String json = objectMapper.writeValueAsString(data);
+            HttpEntity<String> request = new HttpEntity<>(json, headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                erpNextUrl + "/api/resource/" + docType + "/" + name,
+                HttpMethod.PUT,
+                request,
+                String.class
+            );
+
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            if (e.getStatusCode().value() == 403) {
+                sessionCookies = null; // Force re-login
+                if (ensureAuthenticated()) {
+                    return updateRecord(docType, name, data, errors); // Retry once
+                }
+            }
+            String errorMessage = e.getResponseBodyAsString();
+            try {
+                Map<String, Object> errorResponse = objectMapper.readValue(errorMessage, Map.class);
+                String serverMessage = errorResponse.getOrDefault("_error_message", e.getMessage()).toString();
+                errors.add(new CsvImportError(docType + ".csv", 0, "API error updating record: " + serverMessage, LocalDateTime.now()));
+            } catch (Exception ex) {
+                errors.add(new CsvImportError(docType + ".csv", 0, "API error updating record: " + e.getStatusCode() + " - " + e.getMessage(), LocalDateTime.now()));
+            }
+            return false;
+        } catch (Exception e) {
+            errors.add(new CsvImportError(docType + ".csv", 0, "API error updating record: " + e.getMessage(), LocalDateTime.now()));
+            return false;
+        }
+    }
+
+    // Check if a record exists with better error handling
+    public boolean checkRecordExists(String docType, String name, List<CsvImportError> errors) {
+        try {
+            if (!ensureAuthenticated()) {
+                errors.add(new CsvImportError(docType + ".csv", 0, "Failed to authenticate with ERPNext", LocalDateTime.now()));
+                return false;
+            }
+
+            HttpHeaders headers = createAuthenticatedHeaders();
+            HttpEntity<String> request = new HttpEntity<>(headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                erpNextUrl + "/api/resource/" + docType + "/" + name,
+                HttpMethod.GET,
+                request,
+                String.class
+            );
+            
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 404) {
+                // Record doesn't exist, which is not an error
+                return false;
+            }
+            
+            // If we get 403, try to re-login once
+            if (e.getStatusCode().value() == 403) {
+                sessionCookies = null; // Force re-login
+                if (ensureAuthenticated()) {
+                    return checkRecordExists(docType, name, errors); // Retry once
+                }
+            }
+            
+            String errorMsg = "API error checking record existence: " + e.getStatusCode() + " - " + e.getResponseBodyAsString();
+            errors.add(new CsvImportError(docType + ".csv", 0, errorMsg, LocalDateTime.now()));
+            return false;
+        } catch (Exception e) {
+            errors.add(new CsvImportError(docType + ".csv", 0, "API error checking record existence: " + e.getMessage(), LocalDateTime.now()));
+            return false;
+        }
+    }
+
+    // Method to manually refresh session (useful for long-running operations)
+    public boolean refreshSession() {
+        sessionCookies = null;
+        return ensureAuthenticated();
+    }
+}
+
+
+---
+---
+---
+
+thymeleaf view : 
+
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Import CSV</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .main-container {
+            display: flex;
+        }
+        .content-wrapper {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .form-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .table-container {
+            margin-top: 20px;
+        }
+        .card {
+            margin-top: 20px;
+        }
+        .card-title {
+            font-size: 1.5rem;
+        }
+        .btn-import {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-import:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div class="main-container">
+    <!-- Sidebar -->
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <!-- Content -->
+    <div class="content-wrapper">
+        <h1>Importation de Fichiers CSV</h1>
+
+        <!-- Import Form Card -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Sélectionner les fichiers à importer</h5>
+                <form th:action="@{/csv-import}" th:object="${csvImportRequest}" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="employeeCsv" class="form-label">Fichier - 1 (.csv)</label>
+                        <input type="file" id="employeeCsv" name="employeeCsv" class="form-control" accept=".csv" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="salaryStructureCsv" class="form-label">Fichier - 2 (.csv)</label>
+                        <input type="file" id="salaryStructureCsv" name="salaryStructureCsv" class="form-control" accept=".csv" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="salarySlipCsv" class="form-label">Fichier -(.csv)</label>
+                        <input type="file" id="salarySlipCsv" name="salarySlipCsv" class="form-control" accept=".csv" required>
+                    </div>
+                    <button type="submit" class="btn btn-import">Importer</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Response Section -->
+        <div th:if="${response != null}" class="mt-4">
+            <p th:class="${response.success} ? 'text-success' : 'text-danger'" th:text="${response.summaryStatistics}"></p>
+
+            <div th:if="${!response.errors.isEmpty()}" class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Erreurs d'importation</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Fichier</th>
+                                    <th>Ligne</th>
+                                    <th>Description de l'erreur</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="error : ${response.errors}">
+                                    <td th:text="${error.fileName}"></td>
+                                    <td th:text="${error.lineNumber}"></td>
+                                    <td th:text="${error.errorDescription}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div th:replace="fragments/footer :: footer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
