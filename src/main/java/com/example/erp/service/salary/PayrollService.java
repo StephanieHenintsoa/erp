@@ -19,6 +19,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.example.erp.config.ErpNextConfig;
 import com.example.erp.entity.Employee;
+import com.example.erp.entity.salary.PayrollComponentsResponse;
 import com.example.erp.entity.salary.SalarySlip;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -133,13 +134,13 @@ public class PayrollService {
     }
 
     public List<SalarySlip> getMonthlyAggregatedSalarySlips(String month, String year) {
-        List<SalarySlip> salarySlips = getFilteredSalarySlips(null, year); // Ignore month parameter
+        List<SalarySlip> salarySlips = getFilteredSalarySlips(null, year);
         Map<String, SalarySlip> aggregatedSlips = new HashMap<>();
 
         for (SalarySlip slip : salarySlips) {
             String[] dateParts = slip.getPostingDate().split("-");
-            String yearMonth = dateParts[0] + "-" + dateParts[1]; // Format: YYYY-MM
-            String displayMonth = getMonthName(dateParts[1]) + " " + dateParts[0]; // e.g., Janvier 2025
+            String yearMonth = dateParts[0] + "-" + dateParts[1];
+            String displayMonth = getMonthName(dateParts[1]) + " " + dateParts[0];
 
             aggregatedSlips.computeIfAbsent(yearMonth, k -> {
                 SalarySlip newSlip = new SalarySlip();
@@ -155,6 +156,28 @@ public class PayrollService {
         }
 
         return new ArrayList<>(aggregatedSlips.values());
+    }
+
+    public PayrollComponentsResponse getPayrollComponents(String year, String month) {
+        HttpHeaders headers = createAuthHeaders();
+        String yearMonth = year + "-" + month;
+        String url = UriComponentsBuilder.fromHttpUrl("http://erpnext.localhost:8000/api/method/hrms.controllers.payroll_controller.get_payroll_components")
+                .queryParam("year_month", yearMonth)
+                .build(false)
+                .toUriString();
+
+        try {
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+            Map<String, Object> data = (Map<String, Object>) response.getBody().get("message");
+
+            PayrollComponentsResponse components = objectMapper.convertValue(data, PayrollComponentsResponse.class);
+            components.setYear(year); // Set year for display
+            return components;
+        } catch (Exception e) {
+            logger.error("Error fetching payroll components for year_month {}: {}", yearMonth, e.getMessage(), e);
+            throw new RuntimeException("Error fetching payroll components: " + e.getMessage(), e);
+        }
     }
 
     private HttpHeaders createAuthHeaders() {
@@ -177,7 +200,7 @@ public class PayrollService {
                     return 28;
                 }
             default:
-                return 31; // Fallback for invalid month
+                return 31;
         }
     }
 

@@ -116,7 +116,9 @@
                                        class="btn btn-sm btn-success">
                                         <i class="fas fa-eye"></i> Voir détails salaire net
                                     </a>
-                                    <a href="#" class="btn btn-sm btn-info">
+
+                                    <a th:href="@{/payroll/components(year=${year}, month=${monthNumber})}"
+                                       class="btn btn-sm btn-info">
                                         <i class="fas fa-eye"></i> Voir éléments de salaire
                                     </a>
                                 </div>

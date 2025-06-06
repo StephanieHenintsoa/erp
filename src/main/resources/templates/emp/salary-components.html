@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Composants de Salaire</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .main-container {
+            display: flex;
+        }
+        .content-wrapper {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .table-container {
+            margin-top: 20px;
+        }
+        .amount-positive {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .amount-negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .total-row {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            border-top: 2px solid #dee2e6;
+        }
+        .total-amount {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .section-title {
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/sidebar :: sidebar(activePage='payroll-months')}"></div>
+
+        <!-- Content -->
+        <div class="content-wrapper">
+            <h1>Composants de Salaire pour <span th:text="${components.monthName} + ' ' + ${components.year}"></span></h1>
+            <div th:if="${errorMessage}" class="alert alert-warning" role="alert" style="margin-bottom: 20px;">
+                <i class="fas fa-exclamation-triangle"></i> <span th:text="${errorMessage}"></span>
+            </div>
+
+            <!-- Earnings Table -->
+            <h4 class="section-title"><i class="fas fa-plus-circle"></i> Gains</h4>
+            <div class="table-container">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Composant</th>
+                            <th>Montant (<span th:text="${components.currency}"></span>)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="earning : ${components.earnings}">
+                            <td th:text="${earning.salaryComponent}"></td>
+                            <td th:text="${#numbers.formatDecimal(earning.amount, 1, 2)}"></td>
+                        </tr>
+                        <tr th:if="${components.earnings == null or #lists.isEmpty(components.earnings)}">
+                            <td colspan="2" class="text-center">Aucun gain trouvé</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="total-row">
+                            <td class="text-end"><strong>Total Gains:</strong></td>
+                            <td class="total-amount" th:text="${#numbers.formatDecimal(components.totalGross, 1, 2)} + ' ' + ${components.currency}"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Deductions Table -->
+            <h4 class="section-title"><i class="fas fa-minus-circle"></i> Déductions</h4>
+            <div class="table-container">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Composant</th>
+                            <th>Montant (<span th:text="${components.currency}"></span>)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="deduction : ${components.deductions}">
+                            <td th:text="${deduction.salaryComponent}"></td>
+                            <td th:text="${#numbers.formatDecimal(deduction.amount, 1, 2)}"></td>
+                        </tr>
+                        <tr th:if="${components.deductions == null or #lists.isEmpty(components.deductions)}">
+                            <td colspan="2" class="text-center">Aucune déduction trouvée</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="total-row">
+                            <td class="text-end"><strong>Total Déductions:</strong></td>
+                            <td class="total-amount" th:text="${#numbers.formatDecimal(components.totalDeduction, 1, 2)} + ' ' + ${components.currency}"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Summary -->
+            <div class="table-container">
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <td class="text-end"><strong>Total Net:</strong></td>
+                            <td class="total-amount" th:class="${components.totalNet >= 0} ? 'amount-positive' : 'amount-negative'"
+                                th:text="${#numbers.formatDecimal(components.totalNet, 1, 2)} + ' ' + ${components.currency}"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-end"><strong>Nombre d'employés:</strong></td>
+                            <td th:text="${components.employeeCount}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

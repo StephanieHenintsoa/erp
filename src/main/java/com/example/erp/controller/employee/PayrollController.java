@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.erp.entity.Employee;
+import com.example.erp.entity.salary.PayrollComponentsResponse;
 import com.example.erp.entity.salary.SalarySlip;
 import com.example.erp.service.salary.PayrollService;
 
@@ -99,6 +100,21 @@ public class PayrollController {
         model.addAttribute("salarySlips", salarySlips);
         model.addAttribute("selectedYear", year != null ? year : "");
         return "emp/payroll-months";
+    }
+
+    @GetMapping("/components")
+    public String showPayrollComponents(
+            @RequestParam(value = "year") String year,
+            @RequestParam(value = "month") String month,
+            Model model) {
+        try {
+            PayrollComponentsResponse components = payrollService.getPayrollComponents(year, month);
+            model.addAttribute("components", components);
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Erreur lors de la récupération des composants de salaire pour " + getMonthName(month) + " " + year);
+            model.addAttribute("components", new PayrollComponentsResponse());
+        }
+        return "emp/salary-components";
     }
 
     @ExceptionHandler(IllegalStateException.class)
