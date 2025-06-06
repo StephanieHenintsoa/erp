@@ -50,7 +50,7 @@ public class PayrollService {
                     .toUriString();
 
             HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+            ResponseEntity<Map> response = restTemplate.exchange(url + ErpNextConfig.PAGINATION_PARAM_FILTRE, HttpMethod.GET, entity, Map.class);
             List<Map<String, Object>> data = (List<Map<String, Object>>) response.getBody().get("data");
             List<Employee> employees = new ArrayList<>();
             for (Map<String, Object> item : data) {
@@ -106,7 +106,7 @@ public class PayrollService {
             }
 
             HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<Map> response = restTemplate.exchange(builder.build(false).toUriString(), HttpMethod.GET, entity, Map.class);
+            ResponseEntity<Map> response = restTemplate.exchange(builder.build(false).toUriString() + ErpNextConfig.PAGINATION_PARAM_FILTRE, HttpMethod.GET, entity, Map.class);
             List<Map<String, Object>> data = (List<Map<String, Object>>) response.getBody().get("data");
             List<SalarySlip> salarySlips = new ArrayList<>();
             for (Map<String, Object> item : data) {
@@ -168,7 +168,7 @@ public class PayrollService {
 
         try {
             HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+            ResponseEntity<Map> response = restTemplate.exchange(url + ErpNextConfig.PAGINATION_PARAM_FILTRE, HttpMethod.GET, entity, Map.class);
             Map<String, Object> data = (Map<String, Object>) response.getBody().get("message");
 
             PayrollComponentsResponse components = objectMapper.convertValue(data, PayrollComponentsResponse.class);

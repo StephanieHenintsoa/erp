@@ -52,7 +52,7 @@ public class SalaryStructureAssignmentService {
                 builder.queryParam("filters", filtersJson);
             }
 
-            String finalUrl = builder.build(false).toUriString();
+            String finalUrl = builder.build(false).toUriString() + ErpNextConfig.PAGINATION_PARAM_FILTRE;
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<SalaryStructureAssignmentResponse> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, SalaryStructureAssignmentResponse.class);
             return response.getBody().getData();

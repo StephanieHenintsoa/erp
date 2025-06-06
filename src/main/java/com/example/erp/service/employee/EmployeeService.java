@@ -72,7 +72,7 @@ public class EmployeeService {
                 builder.queryParam("filters", filtersJson);
             }
 
-            String finalUrl = builder.build(false).toUriString();
+            String finalUrl = builder.build(false).toUriString() + ErpNextConfig.PAGINATION_PARAM_FILTRE;
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<EmployeeResponse> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, EmployeeResponse.class);
             return response.getBody().getData();
@@ -97,7 +97,7 @@ public class EmployeeService {
             UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
                     .queryParam("fields", fieldsJson);
 
-            String finalUrl = builder.build(false).toUriString();
+            String finalUrl = builder.build(false).toUriString() + ErpNextConfig.PAGINATION_PARAM_FILTRE;
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<SingleEmployeeResponse> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, SingleEmployeeResponse.class);
             Employee employee = response.getBody().getData();
@@ -121,7 +121,7 @@ public class EmployeeService {
                     .toUriString();
                     
             HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<DesignationResponse> response = restTemplate.exchange(url, HttpMethod.GET, entity, DesignationResponse.class);
+            ResponseEntity<DesignationResponse> response = restTemplate.exchange(url + ErpNextConfig.PAGINATION_PARAM_FILTRE, HttpMethod.GET, entity, DesignationResponse.class);
             return response.getBody().getData();
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error processing JSON for Designation API call", e);
@@ -142,12 +142,13 @@ public class EmployeeService {
                     .toUriString();
                     
             HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<DepartmentResponse> response = restTemplate.exchange(url, HttpMethod.GET, entity, DepartmentResponse.class);
+            ResponseEntity<DepartmentResponse> response = restTemplate.exchange(url + ErpNextConfig.PAGINATION_PARAM_FILTRE, HttpMethod.GET, entity, DepartmentResponse.class);
             return response.getBody().getData();
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error processing JSON for Department API call", e);
         }
     }
+    
     public List<Employee> getAllEmployees() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "token " + ErpNextConfig.API_KEY + ":" + ErpNextConfig.API_SECRET);
@@ -166,11 +167,10 @@ public class EmployeeService {
                     .toUriString();
     
             HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<EmployeeResponse> response = restTemplate.exchange(url, HttpMethod.GET, entity, EmployeeResponse.class);
+            ResponseEntity<EmployeeResponse> response = restTemplate.exchange(url + ErpNextConfig.PAGINATION_PARAM_FILTRE, HttpMethod.GET, entity, EmployeeResponse.class);
             return response.getBody().getData();
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error processing JSON for ERPNext API call", e);
         }
     }
-    
 }

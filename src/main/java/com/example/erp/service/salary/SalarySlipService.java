@@ -70,7 +70,7 @@ public class SalarySlipService {
                 builder.queryParam("filters", filtersJson);
             }
 
-            String finalUrl = builder.build(false).toUriString();
+            String finalUrl = builder.build(false).toUriString() + ErpNextConfig.PAGINATION_PARAM_FILTRE;
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<SalarySlipResponse> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, SalarySlipResponse.class);
             return response.getBody() != null ? response.getBody().getData() : new ArrayList<>();
@@ -111,7 +111,7 @@ public class SalarySlipService {
                 builder.queryParam("filters", filtersJson);
             }
 
-            String finalUrl = builder.build(false).toUriString();
+            String finalUrl = builder.build(false).toUriString() + ErpNextConfig.PAGINATION_PARAM_FILTRE;
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<SalarySlipResponse> response = restTemplate.exchange(
                 finalUrl, HttpMethod.GET, entity, SalarySlipResponse.class);
@@ -146,7 +146,7 @@ public class SalarySlipService {
             UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl)
                     .queryParam("fields", fieldsJson);
     
-            String finalUrl = builder.build(false).toUriString(); // false → ne pas encoder le chemin
+            String finalUrl = builder.build(false).toUriString() + ErpNextConfig.PAGINATION_PARAM_FILTRE; // false → ne pas encoder le chemin
     
     
             System.out.println("Fetching salary slip from ERP Next: {}" + finalUrl);
@@ -260,7 +260,7 @@ public class SalarySlipService {
             UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(baseUrl)
                     .queryParam("fields", fieldsJson);
 
-            String finalUrl = builder.build(false).toUriString();
+            String finalUrl = builder.build(false).toUriString() + ErpNextConfig.PAGINATION_PARAM_FILTRE;
             System.out.println("Fetching salary slip details from: {}" + finalUrl);
             
             

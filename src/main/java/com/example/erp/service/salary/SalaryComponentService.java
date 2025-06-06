@@ -36,7 +36,7 @@ public class SalaryComponentService {
 
         try {
             String fieldsJson = objectMapper.writeValueAsString(fieldsList);
-            String url = ErpNextConfig.ERP_NEXT_API_SALARY_COMPONENT_URL; // Assumes a config constant for the Salary Component API endpoint
+            String url = ErpNextConfig.ERP_NEXT_API_SALARY_COMPONENT_URL + ErpNextConfig.PAGINATION_PARAM_FILTRE; 
             UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
                     .queryParam("fields", fieldsJson);
 
@@ -62,7 +62,7 @@ public class SalaryComponentService {
             UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url)
                     .queryParam("fields", fieldsJson);
 
-            String finalUrl = builder.build(false).toUriString();
+            String finalUrl = builder.build(false).toUriString() + ErpNextConfig.PAGINATION_PARAM_FILTRE;
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<SalaryComponentResponse> response = restTemplate.exchange(finalUrl, HttpMethod.GET, entity, SalaryComponentResponse.class);
             return response.getBody().getData().get(0); // Assumes single record for specific name
