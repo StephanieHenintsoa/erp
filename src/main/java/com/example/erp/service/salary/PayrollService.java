@@ -133,7 +133,7 @@ public class PayrollService {
     }
 
     public List<SalarySlip> getMonthlyAggregatedSalarySlips(String month, String year) {
-        List<SalarySlip> salarySlips = getFilteredSalarySlips(month, year);
+        List<SalarySlip> salarySlips = getFilteredSalarySlips(null, year); // Ignore month parameter
         Map<String, SalarySlip> aggregatedSlips = new HashMap<>();
 
         for (SalarySlip slip : salarySlips) {

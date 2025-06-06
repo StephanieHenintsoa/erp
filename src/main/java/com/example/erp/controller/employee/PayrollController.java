@@ -69,25 +69,22 @@ public class PayrollController {
     public String showPayrollMonthsPage(Model model) {
         List<SalarySlip> salarySlips = new ArrayList<>();
         model.addAttribute("salarySlips", salarySlips);
-        model.addAttribute("selectedMonth", "");
         model.addAttribute("selectedYear", "");
         return "emp/payroll-months";
     }
 
     @PostMapping("/months")
     public String filterPayrollMonths(
-            @RequestParam(value = "month", required = false) String month,
             @RequestParam(value = "year", required = false) String year,
             Model model) {
 
-        List<SalarySlip> salarySlips = payrollService.getMonthlyAggregatedSalarySlips(month, year);
+        List<SalarySlip> salarySlips = payrollService.getMonthlyAggregatedSalarySlips(null, year);
 
         if (salarySlips == null || salarySlips.isEmpty()) {
-            throw new IllegalStateException("Aucune fiche de paie trouvée pour le mois " + month + " et l'année " + year);
+            throw new IllegalStateException("Aucune fiche de paie trouvée pour l'année " + year);
         }
 
         model.addAttribute("salarySlips", salarySlips);
-        model.addAttribute("selectedMonth", month != null ? month : "");
         model.addAttribute("selectedYear", year != null ? year : "");
         return "emp/payroll-months";
     }
@@ -95,15 +92,9 @@ public class PayrollController {
     @ExceptionHandler(IllegalStateException.class)
     public String handleIllegalStateException(IllegalStateException ex, Model model) {
         model.addAttribute("errorMessage", ex.getMessage());
-
-        List<Employee> employees = payrollService.getAllEmployees();
-        if (employees == null) employees = new ArrayList<>();
-        model.addAttribute("employees", employees);
         model.addAttribute("salarySlips", new ArrayList<SalarySlip>());
-        model.addAttribute("selectedMonth", "");
         model.addAttribute("selectedYear", "");
-
-        return "emp/payroll";
+        return "emp/payroll-months";
     }
 
     public String getMonthName(String monthNumber) {

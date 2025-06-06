@@ -55,27 +55,9 @@
 
             <!-- Filter Section -->
             <div class="filter-container">
-                <h5><i class="fas fa-filter"></i> Filtrer par Mois</h5>
+                <h5><i class="fas fa-filter"></i> Filtrer par Année</h5>
                 <form method="post" th:action="@{/payroll/months}">
                     <div class="row">
-                        <div class="col-md-3">
-                            <label for="month" class="form-label">Mois</label>
-                            <select class="form-control" id="month" name="month">
-                                <option value="" th:selected="${selectedMonth == null or selectedMonth.isEmpty()}">-- Tous les mois --</option>
-                                <option value="01" th:selected="${selectedMonth == '01'}">Janvier</option>
-                                <option value="02" th:selected="${selectedMonth == '02'}">Février</option>
-                                <option value="03" th:selected="${selectedMonth == '03'}">Mars</option>
-                                <option value="04" th:selected="${selectedMonth == '04'}">Avril</option>
-                                <option value="05" th:selected="${selectedMonth == '05'}">Mai</option>
-                                <option value="06" th:selected="${selectedMonth == '06'}">Juin</option>
-                                <option value="07" th:selected="${selectedMonth == '07'}">Juillet</option>
-                                <option value="08" th:selected="${selectedMonth == '08'}">Août</option>
-                                <option value="09" th:selected="${selectedMonth == '09'}">Septembre</option>
-                                <option value="10" th:selected="${selectedMonth == '10'}">Octobre</option>
-                                <option value="11" th:selected="${selectedMonth == '11'}">Novembre</option>
-                                <option value="12" th:selected="${selectedMonth == '12'}">Décembre</option>
-                            </select>
-                        </div>
                         <div class="col-md-3">
                             <label for="year" class="form-label">Année</label>
                             <select class="form-control" id="year" name="year">
@@ -106,21 +88,27 @@
                             <th>Date de Paie</th>
                             <th>Salaire brut</th>
                             <th>Total Net</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
-                   <tbody>
+                    <tbody>
                         <tr th:each="slip : ${salarySlips}">
                             <td th:text="${slip.postingDate != null ? slip.postingDate : 'N/A'}"></td>
                             <td th:text="${slip.grossPay != null ? (#numbers.formatDecimal(slip.grossPay, 1, 2) + ' €') : '0,00 €'}"></td>
                             <td th:class="${slip.netPay != null and slip.netPay >= 0} ? 'amount-positive' : 'amount-negative'"
                                 th:text="${slip.netPay != null ? (#numbers.formatDecimal(slip.netPay, 1, 2) + ' €') : '0,00 €'}"></td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i> Voir détails
+                                </a>
+                            </td>
                         </tr>
                         <tr th:if="${salarySlips == null or #lists.isEmpty(salarySlips)}">
-                            <td colspan="5" class="text-center">
-                                <span th:if="${selectedMonth != null and !selectedMonth.isEmpty() or selectedYear != null and !selectedYear.isEmpty()}">
-                                    Aucune fiche de paie trouvée pour la période sélectionnée
+                            <td colspan="4" class="text-center">
+                                <span th:if="${selectedYear != null and !selectedYear.isEmpty()}">
+                                    Aucune fiche de paie trouvée pour l'année sélectionnée
                                 </span>
-                                <span th:unless="${selectedMonth != null and !selectedMonth.isEmpty() or selectedYear != null and !selectedYear.isEmpty()}">
+                                <span th:unless="${selectedYear != null and !selectedYear.isEmpty()}">
                                     Aucune fiche de paie disponible
                                 </span>
                             </td>
@@ -138,6 +126,7 @@
                                       th:class="${totalNet >= 0} ? 'amount-positive' : 'amount-negative'"
                                       th:text="${#numbers.formatDecimal(totalNet, 1, 2)} + ' €'"></span>
                             </td>
+                            <td></td>
                         </tr>
                     </tfoot>
                 </table>
