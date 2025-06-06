@@ -149,4 +149,29 @@ public class EmployeeService {
             throw new RuntimeException("Error processing JSON for Department API call", e);
         }
     }
+    public List<Employee> getAllEmployees() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "token " + ErpNextConfig.API_KEY + ":" + ErpNextConfig.API_SECRET);
+        headers.set("Content-Type", "application/json");
+    
+        List<String> fieldsList = Arrays.asList(
+            "name", "employee_name", "first_name", "company", "date_of_joining", 
+            "status", "department", "designation", "gender", "date_of_birth"
+        );
+    
+        try {
+            String fieldsJson = objectMapper.writeValueAsString(fieldsList);
+            String url = UriComponentsBuilder.fromHttpUrl(ErpNextConfig.ERP_NEXT_API_EMPLOYEE_URL)
+                    .queryParam("fields", fieldsJson)
+                    .build(false)
+                    .toUriString();
+    
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<EmployeeResponse> response = restTemplate.exchange(url, HttpMethod.GET, entity, EmployeeResponse.class);
+            return response.getBody().getData();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error processing JSON for ERPNext API call", e);
+        }
+    }
+    
 }

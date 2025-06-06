@@ -28,9 +28,10 @@ public class Employee {
     @JsonProperty("designation")
     private String designation;
 
+
     @JsonProperty("gender")
     private String gender;
-    
+
     @JsonProperty("date_of_birth")
     private String dateOfBirth;
 
