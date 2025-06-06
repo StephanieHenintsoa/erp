@@ -75,9 +75,6 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,123,255,0.3);
         }
-        .details-table {
-            margin-top: 15px;
-        }
     </style>
 </head>
 <body>
@@ -249,10 +246,6 @@
                                     <div class="col-md-5">
                                         <h6 class="mb-1" th:text="${slip.name ?: 'N/A'}">Fiche de Paie</h6>
                                         <small class="text-muted">
-                                            <i class="fas fa-user"></i>
-                                            Employé: <span th:text="${slip.employeeName ?: 'N/A'}"></span>
-                                        </small><br>
-                                        <small class="text-muted">
                                             <i class="fas fa-calendar-alt"></i>
                                             Période: <span th:text="${slip.startDate ?: 'N/A'}"></span> - <span th:text="${slip.endDate ?: 'N/A'}"></span>
                                         </small>
@@ -294,37 +287,6 @@
                                             <div class="fw-bold fs-5" th:text="${slip.netPay != null ? (#numbers.formatDecimal(slip.netPay, 1, 2) + ' €') : '0,00 €'}">0,00 €</div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- Earnings and Deductions Table -->
-                                <div class="details-table">
-                                    <h6 class="mb-3"><i class="fas fa-list"></i> Détails</h6>
-                                    <table class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Type</th>
-                                                <th>Composant</th>
-                                                <th>Abréviation</th>
-                                                <th>Montant (€)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr th:each="earning : ${slip.earnings}">
-                                                <td>Gains</td>
-                                                <td th:text="${earning.salaryComponent ?: 'N/A'}">N/A</td>
-                                                <td th:text="${earning.abbr ?: 'N/A'}">N/A</td>
-                                                <td th:classappend="${earning.amount != null} ? 'amount-positive' : ''" 
-                                                    th:text="${earning.amount != null ? (#numbers.formatDecimal(earning.amount, 1, 2) + ' €') : '0,00 €'}">0,00 €</td>
-                                            </tr>
-                                            <tr th:each="deduction : ${slip.deductions}">
-                                                <td>Déductions</td>
-                                                <td th:text="${deduction.salaryComponent ?: 'N/A'}">N/A</td>
-                                                <td th:text="${deduction.abbr ?: 'N/A'}">N/A</td>
-                                                <td th:classappend="${deduction.amount != null} ? 'amount-negative' : ''" 
-                                                    th:text="${deduction.amount != null ? (#numbers.formatDecimal(deduction.amount, 1, 2) + ' €') : '0,00 €'}">0,00 €</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
                                 </div>
                                 
                                 <!-- Download Form -->
