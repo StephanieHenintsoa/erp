@@ -1,11 +1,11 @@
 package com.example.erp.service.salary;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import com.example.erp.config.ErpNextConfig;
-import com.example.erp.entity.Employee;
-import com.example.erp.entity.salary.SalarySlip;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +17,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import com.example.erp.config.ErpNextConfig;
+import com.example.erp.entity.Employee;
+import com.example.erp.entity.salary.SalarySlip;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class PayrollService {
@@ -86,7 +87,6 @@ public class PayrollService {
                     .queryParam("fields", fieldsJson)
                     .queryParam("order_by", "posting_date desc");
 
-            // Construire les filtres pour le mois et l'année
             List<List<String>> filters = new ArrayList<>();
             if (month != null && !month.isEmpty() && year != null && !year.isEmpty()) {
                 String startDate = year + "-" + String.format("%02d", Integer.parseInt(month)) + "-01";
@@ -132,6 +132,31 @@ public class PayrollService {
         }
     }
 
+    public List<SalarySlip> getMonthlyAggregatedSalarySlips(String month, String year) {
+        List<SalarySlip> salarySlips = getFilteredSalarySlips(month, year);
+        Map<String, SalarySlip> aggregatedSlips = new HashMap<>();
+
+        for (SalarySlip slip : salarySlips) {
+            String[] dateParts = slip.getPostingDate().split("-");
+            String yearMonth = dateParts[0] + "-" + dateParts[1]; // Format: YYYY-MM
+            String displayMonth = getMonthName(dateParts[1]) + " " + dateParts[0]; // e.g., Janvier 2025
+
+            aggregatedSlips.computeIfAbsent(yearMonth, k -> {
+                SalarySlip newSlip = new SalarySlip();
+                newSlip.setPostingDate(displayMonth);
+                newSlip.setGrossPay(0.0);
+                newSlip.setNetPay(0.0);
+                return newSlip;
+            });
+
+            SalarySlip aggSlip = aggregatedSlips.get(yearMonth);
+            aggSlip.setGrossPay(aggSlip.getGrossPay() + slip.getGrossPay());
+            aggSlip.setNetPay(aggSlip.getNetPay() + slip.getNetPay());
+        }
+
+        return new ArrayList<>(aggregatedSlips.values());
+    }
+
     private HttpHeaders createAuthHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "token " + ErpNextConfig.API_KEY + ":" + ErpNextConfig.API_SECRET);
@@ -152,7 +177,28 @@ public class PayrollService {
                     return 28;
                 }
             default:
-                return 31; // Fallback pour mois invalide
+                return 31; // Fallback for invalid month
+        }
+    }
+
+    private String getMonthName(String monthNumber) {
+        if (monthNumber == null || monthNumber.isEmpty()) {
+            return "tous les mois";
+        }
+        switch (monthNumber) {
+            case "01": return "Janvier";
+            case "02": return "Février";
+            case "03": return "Mars";
+            case "04": return "Avril";
+            case "05": return "Mai";
+            case "06": return "Juin";
+            case "07": return "Juillet";
+            case "08": return "Août";
+            case "09": return "Septembre";
+            case "10": return "Octobre";
+            case "11": return "Novembre";
+            case "12": return "Décembre";
+            default: return "mois inconnu";
         }
     }
 }

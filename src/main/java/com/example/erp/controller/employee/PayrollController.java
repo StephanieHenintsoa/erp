@@ -1,17 +1,22 @@
 package com.example.erp.controller.employee;
 
-import com.example.erp.entity.Employee;
-import com.example.erp.entity.salary.SalarySlip;
-import com.example.erp.service.salary.PayrollService;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.ui.Model;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.example.erp.entity.Employee;
+import com.example.erp.entity.salary.SalarySlip;
+import com.example.erp.service.salary.PayrollService;
 
 @Controller
 @RequestMapping("/payroll")
@@ -29,7 +34,6 @@ public class PayrollController {
             employees = new ArrayList<>();
             logger.warn("No employees found, setting empty list");
         }
-        logger.info("Loaded {} employees for payroll page", employees.size());
         model.addAttribute("employees", employees);
         model.addAttribute("salarySlips", new ArrayList<SalarySlip>());
         model.addAttribute("selectedMonth", "");
@@ -61,12 +65,37 @@ public class PayrollController {
         return "emp/payroll";
     }
 
+    @GetMapping("/months")
+    public String showPayrollMonthsPage(Model model) {
+        List<SalarySlip> salarySlips = new ArrayList<>();
+        model.addAttribute("salarySlips", salarySlips);
+        model.addAttribute("selectedMonth", "");
+        model.addAttribute("selectedYear", "");
+        return "emp/payroll-months";
+    }
+
+    @PostMapping("/months")
+    public String filterPayrollMonths(
+            @RequestParam(value = "month", required = false) String month,
+            @RequestParam(value = "year", required = false) String year,
+            Model model) {
+
+        List<SalarySlip> salarySlips = payrollService.getMonthlyAggregatedSalarySlips(month, year);
+
+        if (salarySlips == null || salarySlips.isEmpty()) {
+            throw new IllegalStateException("Aucune fiche de paie trouvée pour le mois " + month + " et l'année " + year);
+        }
+
+        model.addAttribute("salarySlips", salarySlips);
+        model.addAttribute("selectedMonth", month != null ? month : "");
+        model.addAttribute("selectedYear", year != null ? year : "");
+        return "emp/payroll-months";
+    }
 
     @ExceptionHandler(IllegalStateException.class)
     public String handleIllegalStateException(IllegalStateException ex, Model model) {
         model.addAttribute("errorMessage", ex.getMessage());
 
-        // Ajoute aussi les données nécessaires pour que la page s'affiche bien
         List<Employee> employees = payrollService.getAllEmployees();
         if (employees == null) employees = new ArrayList<>();
         model.addAttribute("employees", employees);
@@ -97,7 +126,4 @@ public class PayrollController {
             default: return "mois inconnu";
         }
     }
-    
-
-
 }

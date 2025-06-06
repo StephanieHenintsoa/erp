@@ -24,6 +24,9 @@
                 <li class="nav-item" th:classappend="${activePage == 'payroll'} ? 'active'">
                     <a th:href="@{/payroll}"><i class="fas fa-file-invoice-dollar"></i> Paie</a>
                 </li>    
+                <li class="nav-item" th:classappend="${activePage == 'payroll-months'} ? 'active'">
+                    <a th:href="@{/payroll/months}"><i class="fas fa-calendar-alt"></i> Paie Mensuelle</a>
+                </li>
                 <li class="nav-item" th:classappend="${activePage == 'reset-database'} ? 'active'">
                     <a th:href="@{/reset-database}"><i class="fas fa-trash-alt"></i> Reset Database</a>
                 </li>          
