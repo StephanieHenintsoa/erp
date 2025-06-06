@@ -1,19 +1,10 @@
 package com.example.erp.controller.employee;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,14 +18,6 @@ import com.example.erp.entity.Employee;
 import com.example.erp.entity.salary.SalarySlip;
 import com.example.erp.service.employee.EmployeeService;
 import com.example.erp.service.salary.SalarySlipService;
-import com.example.erp.service.salary.SalaryStructureAssignmentService;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.Paragraph;
-import com.example.erp.service.salary.SalaryComponentService;
-
-
 
 @Controller
 public class EmployeeController {
@@ -44,12 +27,6 @@ public class EmployeeController {
     
     @Autowired
     private SalarySlipService salarySlipService;
-    
-    @Autowired
-    private SalaryComponentService salaryComponentService;
-    
-    @Autowired
-    private SalaryStructureAssignmentService salaryStructureAssignmentService;
 
     @GetMapping("/employees")
     public String getAllEmployees(
@@ -100,8 +77,18 @@ public class EmployeeController {
             return "emp/employee-payslips";
         }
 
+        List<SalarySlip> salarySlips = salarySlipService.getSalarySlipsByEmployeeAndMonthYear(name, null, null);
+        // Fetch detailed data for each salary slip
+        List<SalarySlip> detailedSlips = new ArrayList<>();
+        for (SalarySlip slip : salarySlips) {
+            SalarySlip detailedSlip = salarySlipService.getSalarySlipWithDetails(slip.getName());
+            if (detailedSlip != null) {
+                detailedSlips.add(detailedSlip);
+            }
+        }
+
         model.addAttribute("employee", employee);
-        model.addAttribute("salarySlips", List.of()); 
+        model.addAttribute("salarySlips", detailedSlips);
         model.addAttribute("selectedMonth", "");
         model.addAttribute("selectedYear", "");
         model.addAttribute("activePage", "employees");
@@ -116,34 +103,38 @@ public class EmployeeController {
             @RequestParam(required = false) String year,
             Model model) {
         
-        System.out.println("=== DEBUT CONTROLLEUR ===");
-        System.out.println("Paramètres reçus - name: " + name + ", month: " + month + ", year: " + year);
-
         Employee employee = employeeService.getEmployeeByName(name);
         model.addAttribute("employee", employee);
         
         if (employee == null) {
-            System.out.println("Employee non trouvé");
             model.addAttribute("error", "Employé non trouvé.");
+            model.addAttribute("salarySlips", List.of());
+            model.addAttribute("selectedMonth", month);
+            model.addAttribute("selectedYear", year);
             return "emp/employee-payslips";
         }
 
         List<SalarySlip> salarySlips = new ArrayList<>();
-        
         try {
             salarySlips = salarySlipService.getSalarySlipsByEmployeeAndMonthYear(name, month, year);
-            System.out.println("Nombre de fiches trouvées: " + salarySlips.size());
-            
+            // Fetch detailed data for each salary slip
+            List<SalarySlip> detailedSlips = new ArrayList<>();
+            for (SalarySlip slip : salarySlips) {
+                SalarySlip detailedSlip = salarySlipService.getSalarySlipWithDetails(slip.getName());
+                if (detailedSlip != null) {
+                    detailedSlips.add(detailedSlip);
+                }
+            }
+            salarySlips = detailedSlips;
         } catch (Exception e) {
-            System.out.println("Erreur lors de la récupération des fiches: " + e.getMessage());
             model.addAttribute("error", "Erreur lors de la récupération des fiches de paie");
         }
 
         model.addAttribute("salarySlips", salarySlips);
         model.addAttribute("selectedMonth", month);
         model.addAttribute("selectedYear", year);
+        model.addAttribute("activePage", "employees");
         
-        System.out.println("=== FIN CONTROLLEUR ===");
         return "emp/employee-payslips";
     }
 }
