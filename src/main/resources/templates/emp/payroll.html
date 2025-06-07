@@ -45,6 +45,64 @@
         .same-employee {
             background-color: #f8f9fa;
         }
+        /* New styles for summary card */
+        .summary-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        .summary-header {
+            border-radius: 10px 10px 0 0 !important;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+        }
+        .summary-table {
+            margin-bottom: 0;
+        }
+        .summary-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            border-bottom-width: 2px;
+        }
+        .summary-table td {
+            font-size: 1.05rem;
+            vertical-align: middle;
+            padding: 1.25rem;
+        }
+        .summary-value {
+            font-size: 1.2rem;
+        }
+        .summary-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 1.25rem;
+        }
+        .employees-count {
+            background-color: #4e73df;
+        }
+        .gross-total {
+            background-color: #1cc88a;
+        }
+        .deductions-total {
+            background-color: #e74a3b;
+        }
+        .net-total {
+            background-color: #36b9cc;
+        }
+        .summary-label {
+            display: flex;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -103,6 +161,92 @@
                         </div>
                     </div>
                 </form>
+            </div>
+
+            <!-- Payroll Summary Card -->
+            <div class="card summary-card">
+                <div class="card-header summary-header text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Récapitulatif des paies</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover summary-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Métrique</th>
+                                    <th style="width: 25%;">Valeur</th>
+                                    <th style="width: 25%;">Métrique</th>
+                                    <th style="width: 25%;">Valeur</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="summary-label">
+                                            <div class="summary-icon employees-count">
+                                                <i class="fas fa-users"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted small">Nombre d'employés</div>
+                                                <div class="text-primary fw-bold">Période sélectionnée</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="summary-value">
+                                        <span th:text="${uniqueEmployeeCount}"></span>
+                                    </td>
+                                    <td>
+                                        <div class="summary-label">
+                                            <div class="summary-icon gross-total">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted small">Total brut</div>
+                                                <div class="text-primary fw-bold">Salaires bruts</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="summary-value amount-positive">
+                                        <span th:with="totalGross=${#aggregates.sum(salarySlips.![grossPay ?: 0])}"
+                                              th:text="${#numbers.formatDecimal(totalGross, 1, 2, 'COMMA') + ' €'}"></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="summary-label">
+                                            <div class="summary-icon deductions-total">
+                                                <i class="fas fa-minus-circle"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted small">Total déductions</div>
+                                                <div class="text-primary fw-bold">Cotisations</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="summary-value amount-negative">
+                                        <span th:with="totalDeductions=${#aggregates.sum(salarySlips.![totalDeduction ?: 0])}"
+                                              th:text="${#numbers.formatDecimal(totalDeductions, 1, 2, 'COMMA') + ' €'}"></span>
+                                    </td>
+                                    <td>
+                                        <div class="summary-label">
+                                            <div class="summary-icon net-total">
+                                                <i class="fas fa-wallet"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted small">Total net</div>
+                                                <div class="text-primary fw-bold">Salaires nets</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="summary-value" th:classappend="${#aggregates.sum(salarySlips.![netPay ?: 0]) >= 0} ? 'amount-positive' : 'amount-negative'">
+                                        <span th:with="totalNet=${#aggregates.sum(salarySlips.![netPay ?: 0])}"
+                                              th:text="${#numbers.formatDecimal(totalNet, 1, 2, 'COMMA') + ' €'}"></span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- Payroll Table -->
@@ -166,12 +310,9 @@
 
                             <td>
                                 <a th:href="@{/payroll/components/employee(year=${slip.postingDate != null ? slip.postingDate.substring(0,4) : '2025'},month=${slip.postingDate != null ? slip.postingDate.substring(5,7) : '01'},employee=${slip.employee})}" class="btn btn-sm btn-info">
-          
                                     <i class="fas fa-eye"></i> Détails
                                 </a>
                             </td>
-                                
-                            
                         </tr>
                         
                         <!-- Show message when no salary slips found -->
@@ -188,7 +329,11 @@
                     </tbody>
                     <tfoot>
                         <tr class="total-row">
-                            <td colspan="5" class="text-end"><strong>TOTAL:</strong></td>
+                            <td colspan="4" class="text-end"><strong>TOTAL:</strong></td>
+                            <td class="total-amount">
+                                <span th:with="totalDeductions=${#aggregates.sum(salarySlips.![totalDeduction ?: 0])}"
+                                      th:text="${#numbers.formatDecimal(totalDeductions, 1, 2)} + ' €'"></span>
+                            </td>
                             <td class="total-amount">
                                 <span th:with="totalGross=${#aggregates.sum(salarySlips.![grossPay ?: 0])}"
                                       th:text="${#numbers.formatDecimal(totalGross, 1, 2)} + ' €'"></span>
@@ -198,6 +343,7 @@
                                       th:class="${totalNet >= 0} ? 'amount-positive' : 'amount-negative'"
                                       th:text="${#numbers.formatDecimal(totalNet, 1, 2)} + ' €'"></span>
                             </td>
+                            <td></td>
                         </tr>
                     </tfoot>
                 </table>

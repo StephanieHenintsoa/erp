@@ -30,14 +30,60 @@
             color: #dc3545;
             font-weight: bold;
         }
-        .total-row {
-            background-color: #f8f9fa;
-            font-weight: bold;
-            border-top: 2px solid #dee2e6;
+        /* New styles for summary card */
+        .summary-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
         }
-        .total-amount {
-            font-size: 1.1em;
-            font-weight: bold;
+        .summary-header {
+            border-radius: 10px 10px 0 0 !important;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+        }
+        .summary-table {
+            margin-bottom: 0;
+        }
+        .summary-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            border-bottom-width: 2px;
+        }
+        .summary-table td {
+            font-size: 1.05rem;
+            vertical-align: middle;
+            padding: 1.25rem;
+        }
+        .summary-value {
+            font-size: 1.2rem;
+        }
+        .summary-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 1.25rem;
+        }
+        .pay-dates-count {
+            background-color: #f6c23e;
+        }
+        .gross-total {
+            background-color: #1cc88a;
+        }
+        .net-total {
+            background-color: #36b9cc;
+        }
+        .summary-label {
+            display: flex;
+            align-items: center;
         }
     </style>
 </head>
@@ -80,6 +126,79 @@
                 </form>
             </div>
 
+            <!-- Payroll Summary Card -->
+            <div class="card summary-card">
+                <div class="card-header summary-header text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Récapitulatif des paies</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover summary-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Métrique</th>
+                                    <th style="width: 25%;">Valeur</th>
+                                    <th style="width: 25%;">Métrique</th>
+                                    <th style="width: 25%;">Valeur</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="summary-label">
+                                            <div class="summary-icon pay-dates-count">
+                                                <i class="fas fa-calendar-alt"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted small">Nombre total de paie</div>
+                                                <div class="text-primary fw-bold">Dates de paie</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="summary-value">
+                                        <span th:text="${uniquePayDateCount}"></span>
+                                    </td>
+                                    <td>
+                                        <div class="summary-label">
+                                            <div class="summary-icon gross-total">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted small">Total brut</div>
+                                                <div class="text-primary fw-bold">Salaires bruts</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="summary-value amount-positive">
+                                        <span th:with="totalGross=${#aggregates.sum(salarySlips.![grossPay ?: 0])}"
+                                              th:text="${#numbers.formatDecimal(totalGross, 1, 2, 'COMMA')} + ' €'"></span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="summary-label">
+                                            <div class="summary-icon net-total">
+                                                <i class="fas fa-wallet"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-muted small">Total net</div>
+                                                <div class="text-primary fw-bold">Salaires nets</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="summary-value" th:classappend="${#aggregates.sum(salarySlips.![netPay ?: 0]) >= 0} ? 'amount-positive' : 'amount-negative'">
+                                        <span th:with="totalNet=${#aggregates.sum(salarySlips.![netPay ?: 0])}"
+                                              th:text="${#numbers.formatDecimal(totalNet, 1, 2, 'COMMA')} + ' €'"></span>
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- Payroll Table -->
             <div class="table-container">
                 <table class="table table-striped">
@@ -94,11 +213,10 @@
                     <tbody>
                         <tr th:each="slip : ${salarySlips}">
                             <td th:text="${slip.postingDate != null ? slip.postingDate : 'N/A'}"></td>
-                            <td th:text="${slip.grossPay != null ? (#numbers.formatDecimal(slip.grossPay, 1, 2) + ' €') : '0,00 €'}"></td>
+                            <td th:text="${slip.grossPay != null ? (#numbers.formatDecimal(slip.grossPay, 1, 2, 'COMMA') + ' €') : '0,00 €'}"></td>
                             <td th:class="${slip.netPay != null and slip.netPay >= 0} ? 'amount-positive' : 'amount-negative'"
-                                th:text="${slip.netPay != null ? (#numbers.formatDecimal(slip.netPay, 1, 2) + ' €') : '0,00 €'}"></td>
+                                th:text="${slip.netPay != null ? (#numbers.formatDecimal(slip.netPay, 1, 2, 'COMMA') + ' €') : '0,00 €'}"></td>
                             <td>
-                                <!-- Simplified approach using hidden variables -->
                                 <div th:with="monthName=${#strings.substringBefore(slip.postingDate, ' ')},
                                              year=${#strings.substringAfter(slip.postingDate, ' ')},
                                              monthNumber=${monthName == 'Janvier' ? '01' : 
@@ -116,13 +234,11 @@
                                        class="btn btn-sm btn-success">
                                         <i class="fas fa-eye"></i> Voir détails salaire net
                                     </a>
-
                                     <a th:href="@{/payroll/components(year=${year}, month=${monthNumber})}"
                                        class="btn btn-sm btn-info">
                                         <i class="fas fa-eye"></i> Voir éléments de salaire
                                     </a>
                                 </div>
-                                
                             </td>
                         </tr>
                         <tr th:if="${salarySlips == null or #lists.isEmpty(salarySlips)}">
@@ -136,21 +252,6 @@
                             </td>
                         </tr>
                     </tbody>
-                    <tfoot>
-                        <tr class="total-row">
-                            <td colspan="1" class="text-end"><strong>TOTAL:</strong></td>
-                            <td class="total-amount">
-                                <span th:with="totalGross=${#aggregates.sum(salarySlips.![grossPay ?: 0])}"
-                                      th:text="${#numbers.formatDecimal(totalGross, 1, 2)} + ' €'"></span>
-                            </td>
-                            <td class="total-amount">
-                                <span th:with="totalNet=${#aggregates.sum(salarySlips.![netPay ?: 0])}"
-                                      th:class="${totalNet >= 0} ? 'amount-positive' : 'amount-negative'"
-                                      th:text="${#numbers.formatDecimal(totalNet, 1, 2)} + ' €'"></span>
-                            </td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>

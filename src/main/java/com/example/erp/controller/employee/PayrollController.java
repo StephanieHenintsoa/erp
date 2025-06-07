@@ -2,6 +2,7 @@ package com.example.erp.controller.employee;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
+import java.util.Set;
 import com.example.erp.entity.Employee;
 import com.example.erp.entity.salary.PayrollComponentsResponse;
 import com.example.erp.entity.salary.SalarySlip;
@@ -70,11 +71,17 @@ public class PayrollController {
         if (salarySlips == null || salarySlips.isEmpty()) {
             throw new IllegalStateException("Aucune fiche de paie trouvée pour le mois " + month + " et l'année " + year);
         }
+        Set<String> uniqueEmployees = salarySlips.stream()
+                .map(SalarySlip::getEmployee)
+                .collect(Collectors.toSet());
+        int uniqueEmployeeCount = uniqueEmployees.size();
+        
 
         model.addAttribute("employees", employees);
         model.addAttribute("salarySlips", salarySlips);
         model.addAttribute("selectedMonth", month != null ? month : "");
         model.addAttribute("selectedYear", year != null ? year : "");
+        model.addAttribute("uniqueEmployeeCount", uniqueEmployeeCount);
         return "emp/payroll";
     }
 
@@ -96,9 +103,15 @@ public class PayrollController {
         if (salarySlips == null || salarySlips.isEmpty()) {
             throw new IllegalStateException("Aucune fiche de paie trouvée pour l'année " + year);
         }
+        Set<String> uniquePayDates = salarySlips.stream()
+        .map(slip -> slip.getPostingDate() != null ? slip.getPostingDate() : "")
+        .filter(date -> !date.isEmpty())
+        .collect(Collectors.toSet());
+        int uniquePayDateCount = uniquePayDates.size();
 
         model.addAttribute("salarySlips", salarySlips);
         model.addAttribute("selectedYear", year != null ? year : "");
+        model.addAttribute("uniquePayDateCount", uniquePayDateCount);
         return "emp/payroll-months";
     }
 
