@@ -180,7 +180,35 @@ public class PayrollService {
             throw new RuntimeException("Error fetching payroll components: " + e.getMessage(), e);
         }
     }
+    public PayrollComponentsResponse getPayrollComponentsEmp(String year, String month, String emp) {
+        logger.debug("Fetching payroll components for employee {} and year_month {}-{}", emp, year, month);
+        if (year == null || year.isEmpty() || month == null || month.isEmpty()) {
+            logger.error("Invalid year or month provided: year={}, month={}", year, month);
+            throw new IllegalArgumentException("L'année et le mois sont requis pour récupérer les composants de salaire.");
+        }
+        HttpHeaders headers = createAuthHeaders();
+        String yearMonth = year + "-" + String.format("%02d", Integer.parseInt(month));
+        System.out.println("yearMonth ===>"+yearMonth);
+        String url = UriComponentsBuilder.fromHttpUrl("http://erpnext.localhost:8000/api/method/hrms.controllers.payroll_controller.get_payroll_components_emp")
+                .queryParam("year_month", yearMonth)
+                .queryParam("emp", emp)
+                .build(false)
+                .toUriString();
 
+        try {
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<Map> response = restTemplate.exchange(url + ErpNextConfig.PAGINATION_PARAM_FILTRE, HttpMethod.GET, entity, Map.class);
+            Map<String, Object> data = (Map<String, Object>) response.getBody().get("message");
+
+            PayrollComponentsResponse components = objectMapper.convertValue(data, PayrollComponentsResponse.class);
+            components.setYear(year); // Set year for display
+            logger.debug("Successfully fetched payroll components for employee {}", emp);
+            return components;
+        } catch (Exception e) {
+            logger.error("Error fetching payroll components for employee {} and year_month {}: {}", emp, yearMonth, e.getMessage(), e);
+            throw new RuntimeException("Error fetching payroll components for employee: " + e.getMessage(), e);
+        }
+    }
     private HttpHeaders createAuthHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "token " + ErpNextConfig.API_KEY + ":" + ErpNextConfig.API_SECRET);

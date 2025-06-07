@@ -117,6 +117,7 @@
                             <th>Total déductions</th>
                             <th>Total brut</th>
                             <th>Total Net</th>
+                            <th>Voir éléments de salaire</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -162,6 +163,15 @@
                             <!-- Net pay -->
                             <td th:class="${slip.netPay != null and slip.netPay >= 0} ? 'amount-positive' : 'amount-negative'"
                                 th:text="${slip.netPay != null ? (#numbers.formatDecimal(slip.netPay, 1, 2) + ' €') : '0,00 €'}"></td>
+
+                            <td>
+                                <a th:href="@{/payroll/components/employee(year=${slip.postingDate != null ? slip.postingDate.substring(0,4) : '2025'},month=${slip.postingDate != null ? slip.postingDate.substring(5,7) : '01'},employee=${slip.employee})}" class="btn btn-sm btn-info">
+          
+                                    <i class="fas fa-eye"></i> Détails
+                                </a>
+                            </td>
+                                
+                            
                         </tr>
                         
                         <!-- Show message when no salary slips found -->

@@ -7,7 +7,11 @@ import com.example.erp.service.salary.SalarySlipService;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.TextAlignment;
+import com.itextpdf.layout.properties.UnitValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,10 +60,8 @@ public class PayslipDownloadController {
             
             // Récupération de la fiche de paie
             SalarySlip salarySlip = salarySlipService.getSalarySlipByName(slipName);
-            
-
             if (salarySlip == null) {
-                logger.warn("Fiche de paie non trouvée pour '{}'. Vérifiez le nom dans ERP Next.", salarySlip);
+                logger.warn("Fiche de paie non trouvée: '{}'", slipName);
                 return ResponseEntity.notFound().build();
             }
             logger.debug("Fiche de paie trouvée: ID={}, Période={} à {}", 
@@ -103,14 +105,16 @@ public class PayslipDownloadController {
              PdfDocument pdf = new PdfDocument(writer);
              Document document = new Document(pdf)) {
             
+            // Titre principal
             document.add(new Paragraph("BULLETIN DE PAIE")
                     .setFontSize(20)
                     .setBold()
-                    .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.CENTER));
+                    .setTextAlignment(TextAlignment.CENTER));
             
             document.add(new Paragraph(" "));
             document.add(new Paragraph(" "));
 
+            // Section Informations Employé
             document.add(new Paragraph("INFORMATIONS EMPLOYÉ")
                     .setFontSize(14)
                     .setBold()
@@ -125,6 +129,7 @@ public class PayslipDownloadController {
 
             document.add(new Paragraph(" "));
 
+            // Section Période de Paie
             document.add(new Paragraph("PÉRIODE DE PAIE")
                     .setFontSize(14)
                     .setBold()
@@ -138,43 +143,85 @@ public class PayslipDownloadController {
 
             document.add(new Paragraph(" "));
 
+            // Section Détails Financiers
             document.add(new Paragraph("DÉTAILS FINANCIERS")
                     .setFontSize(14)
                     .setBold()
                     .setUnderline());
             
+            // Tableau des Gains
             document.add(new Paragraph("GAINS:")
                     .setFontSize(12)
                     .setBold());
-            document.add(new Paragraph("   Salaire Brut: " + formatAmount(salarySlip.getGrossPay()) + " €"));
-            document.add(new Paragraph("   Total Gains: " + formatAmount(salarySlip.getTotalEarnings()) + " €"));
+            Table earningsTable = new Table(UnitValue.createPercentArray(new float[]{70, 30}));
+            earningsTable.setWidth(UnitValue.createPercentValue(100));
+            earningsTable.addHeaderCell(new Cell().add(new Paragraph("Composant").setBold()));
+            earningsTable.addHeaderCell(new Cell().add(new Paragraph("Montant (€)").setBold().setTextAlignment(TextAlignment.RIGHT)));
+            
+            if (salarySlip.getEarnings() != null && !salarySlip.getEarnings().isEmpty()) {
+                for (var earning : salarySlip.getEarnings()) {
+                    String component = safeString(earning.getSalaryComponent()) + 
+                                       (earning.getAbbr() != null ? " (" + safeString(earning.getAbbr()) + ")" : "");
+                    earningsTable.addCell(new Cell().add(new Paragraph(component)));
+                    earningsTable.addCell(new Cell().add(new Paragraph(formatAmount(earning.getAmount()))
+                            .setTextAlignment(TextAlignment.RIGHT)));
+                }
+            } else {
+                earningsTable.addCell(new Cell(1, 2).add(new Paragraph("Aucun gain").setTextAlignment(TextAlignment.CENTER)));
+            }
+            document.add(earningsTable);
+            document.add(new Paragraph("Total Gains: " + formatAmount(salarySlip.getTotalEarnings()) + " €")
+                    .setBold());
+            document.add(new Paragraph("Salaire Brut: " + formatAmount(salarySlip.getGrossPay()) + " €")
+                    .setBold());
             
             document.add(new Paragraph(" "));
             
+            // Tableau des Déductions
             document.add(new Paragraph("DÉDUCTIONS:")
                     .setFontSize(12)
                     .setBold());
-            document.add(new Paragraph("   Total Déductions: " + formatAmount(salarySlip.getTotalDeduction()) + " €"));
+            Table deductionsTable = new Table(UnitValue.createPercentArray(new float[]{70, 30}));
+            deductionsTable.setWidth(UnitValue.createPercentValue(100));
+            deductionsTable.addHeaderCell(new Cell().add(new Paragraph("Composant").setBold()));
+            deductionsTable.addHeaderCell(new Cell().add(new Paragraph("Montant (€)").setBold().setTextAlignment(TextAlignment.RIGHT)));
+            
+            if (salarySlip.getDeductions() != null && !salarySlip.getDeductions().isEmpty()) {
+                for (var deduction : salarySlip.getDeductions()) {
+                    String component = safeString(deduction.getSalaryComponent()) + 
+                                       (deduction.getAbbr() != null ? " (" + safeString(deduction.getAbbr()) + ")" : "");
+                    deductionsTable.addCell(new Cell().add(new Paragraph(component)));
+                    deductionsTable.addCell(new Cell().add(new Paragraph(formatAmount(deduction.getAmount()))
+                            .setTextAlignment(TextAlignment.RIGHT)));
+                }
+            } else {
+                deductionsTable.addCell(new Cell(1, 2).add(new Paragraph("Aucune déduction").setTextAlignment(TextAlignment.CENTER)));
+            }
+            document.add(deductionsTable);
+            document.add(new Paragraph("Total Déductions: " + formatAmount(salarySlip.getTotalDeduction()) + " €")
+                    .setBold());
             
             document.add(new Paragraph(" "));
             document.add(new Paragraph(" "));
             
+            // Section Net à Payer
             document.add(new Paragraph("═══════════════════════════════════════")
-                    .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.CENTER));
+                    .setTextAlignment(TextAlignment.CENTER));
             document.add(new Paragraph("NET À PAYER: " + formatAmount(salarySlip.getNetPay()) + " €")
                     .setFontSize(18)
                     .setBold()
-                    .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.CENTER));
+                    .setTextAlignment(TextAlignment.CENTER));
             document.add(new Paragraph("═══════════════════════════════════════")
-                    .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.CENTER));
+                    .setTextAlignment(TextAlignment.CENTER));
             
             document.add(new Paragraph(" "));
             document.add(new Paragraph(" "));
             
+            // Pied de page
             document.add(new Paragraph("Document généré automatiquement le " + 
                         java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm")))
                     .setFontSize(8)
-                    .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.CENTER));
+                    .setTextAlignment(TextAlignment.CENTER));
         }
         
         return new ByteArrayInputStream(baos.toByteArray());

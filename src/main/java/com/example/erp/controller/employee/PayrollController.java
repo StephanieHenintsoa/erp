@@ -117,6 +117,23 @@ public class PayrollController {
         return "emp/salary-components";
     }
 
+    @GetMapping("/components/employee")
+    public String showPayrollComponentsEmp(
+            @RequestParam(value = "year") String year,
+            @RequestParam(value = "month") String month,
+            @RequestParam(value = "employee") String employee,
+            Model model) {
+        try {
+            PayrollComponentsResponse components = payrollService.getPayrollComponentsEmp(year, month, employee);
+            model.addAttribute("components", components);
+            model.addAttribute("employee", employee);
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Erreur lors de la récupération des composants de salaire pour l'employé " + employee + " pour " + getMonthName(month) + " " + year);
+            model.addAttribute("components", new PayrollComponentsResponse());
+        }
+        return "emp/salary-components-emp";
+    }
+
     @ExceptionHandler(IllegalStateException.class)
     public String handleIllegalStateException(IllegalStateException ex, Model model) {
         model.addAttribute("errorMessage", ex.getMessage());
