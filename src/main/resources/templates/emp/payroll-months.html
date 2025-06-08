@@ -30,7 +30,6 @@
             color: #dc3545;
             font-weight: bold;
         }
-        /* New styles for summary card */
         .summary-card {
             border: none;
             border-radius: 10px;
@@ -115,10 +114,12 @@
                             </select>
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
+                            <input type="hidden" name="page" value="1"/>
+                            <input type="hidden" name="pageSize" th:value="${pageSize}"/>
                             <button type="submit" class="btn btn-primary me-2">
                                 <i class="fas fa-search"></i> Filtrer
                             </button>
-                            <a th:href="@{/payroll/months}" class="btn btn-outline-secondary">
+                            <a th:href="@{/payroll/months(page=1,pageSize=${pageSize})}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times"></i> Effacer
                             </a>
                         </div>
@@ -156,7 +157,7 @@
                                         </div>
                                     </td>
                                     <td class="summary-value">
-                                        <span th:text="${uniquePayDateCount}"></span>
+                                        <span th:text="${uniquePayDateCount} ?: 0"></span>
                                     </td>
                                     <td>
                                         <div class="summary-label">
@@ -171,7 +172,7 @@
                                     </td>
                                     <td class="summary-value amount-positive">
                                         <span th:with="totalGross=${#aggregates.sum(salarySlips.![grossPay ?: 0])}"
-                                              th:text="${#numbers.formatDecimal(totalGross, 1, 2, 'COMMA')} + ' €'"></span>
+                                              th:text="${#numbers.formatDecimal(totalGross, 1, 2, 'COMMA') + ' €'} ?: '0,00 €'"></span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -188,7 +189,7 @@
                                     </td>
                                     <td class="summary-value" th:classappend="${#aggregates.sum(salarySlips.![netPay ?: 0]) >= 0} ? 'amount-positive' : 'amount-negative'">
                                         <span th:with="totalNet=${#aggregates.sum(salarySlips.![netPay ?: 0])}"
-                                              th:text="${#numbers.formatDecimal(totalNet, 1, 2, 'COMMA')} + ' €'"></span>
+                                              th:text="${#numbers.formatDecimal(totalNet, 1, 2, 'COMMA') + ' €'} ?: '0,00 €'"></span>
                                     </td>
                                     <td></td>
                                     <td></td>
@@ -230,11 +231,11 @@
                                                           monthName == 'Septembre' ? '09' : 
                                                           monthName == 'Octobre' ? '10' : 
                                                           monthName == 'Novembre' ? '11' : '12'}">
-                                    <a th:href="@{/payroll(month=${monthNumber}, year=${year})}"
+                                    <a th:href="@{/payroll(month=${monthNumber},year=${year},page=1,pageSize=10)}"
                                        class="btn btn-sm btn-success">
                                         <i class="fas fa-eye"></i> Voir détails salaire net
                                     </a>
-                                    <a th:href="@{/payroll/components(year=${year}, month=${monthNumber})}"
+                                    <a th:href="@{/payroll/components(year=${year},month=${monthNumber})}"
                                        class="btn btn-sm btn-info">
                                         <i class="fas fa-eye"></i> Voir éléments de salaire
                                     </a>
@@ -253,6 +254,23 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div th:if="${totalPages > 1}" class="pagination-container mt-4">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                            <a class="page-link" th:href="@{/payroll/months(year=${selectedYear},page=${currentPage - 1},pageSize=${pageSize})}">Précédent</a>
+                        </li>
+                        <li class="page-item" th:each="pageNum : ${pageNumbers}" th:classappend="${pageNum == currentPage} ? 'active'">
+                            <a class="page-link" th:href="@{/payroll/months(year=${selectedYear},page=${pageNum},pageSize=${pageSize})}" th:text="${pageNum}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                            <a class="page-link" th:href="@{/payroll/months(year=${selectedYear},page=${currentPage + 1},pageSize=${pageSize})}">Suivant</a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>

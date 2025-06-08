@@ -1,7 +1,10 @@
 package com.example.erp.controller.employee;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -34,6 +37,23 @@ public class PayrollController {
     @Autowired
     private PaginationService<SalarySlip> paginationService;
 
+    // Map French month names to numerical values for sorting
+    private static final Map<String, String> FRENCH_MONTH_TO_NUMBER = new HashMap<>();
+    static {
+        FRENCH_MONTH_TO_NUMBER.put("Janvier", "01");
+        FRENCH_MONTH_TO_NUMBER.put("Février", "02");
+        FRENCH_MONTH_TO_NUMBER.put("Mars", "03");
+        FRENCH_MONTH_TO_NUMBER.put("Avril", "04");
+        FRENCH_MONTH_TO_NUMBER.put("Mai", "05");
+        FRENCH_MONTH_TO_NUMBER.put("Juin", "06");
+        FRENCH_MONTH_TO_NUMBER.put("Juillet", "07");
+        FRENCH_MONTH_TO_NUMBER.put("Août", "08");
+        FRENCH_MONTH_TO_NUMBER.put("Septembre", "09");
+        FRENCH_MONTH_TO_NUMBER.put("Octobre", "10");
+        FRENCH_MONTH_TO_NUMBER.put("Novembre", "11");
+        FRENCH_MONTH_TO_NUMBER.put("Décembre", "12");
+    }
+
     @GetMapping
     public String showPayrollPage(
             @RequestParam(value = "month", required = false) String month,
@@ -48,7 +68,6 @@ public class PayrollController {
         }
 
         List<SalarySlip> salarySlips = new ArrayList<>();
-        // Fetch all salary slips if month and year are not provided
         if (month != null && !month.isEmpty() && year != null && !year.isEmpty()) {
             salarySlips = payrollService.getFilteredSalarySlips(month, year);
         } else {
@@ -123,23 +142,35 @@ public class PayrollController {
     }
 
     @GetMapping("/months")
-    public String showPayrollMonthsPage(Model model) {
-        List<SalarySlip> salarySlips = new ArrayList<>();
-        model.addAttribute("salarySlips", salarySlips);
-        model.addAttribute("selectedYear", "");
-        model.addAttribute("activePage", "payroll");
-        return "emp/payroll-months";
-    }
-
-    @PostMapping("/months")
-    public String filterPayrollMonths(
+    public String showPayrollMonthsPage(
             @RequestParam(value = "year", required = false) String year,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "12") int pageSize,
             Model model) {
-
         List<SalarySlip> salarySlips = payrollService.getMonthlyAggregatedSalarySlips(null, year);
         if (salarySlips == null) {
             salarySlips = new ArrayList<>();
         }
+
+        // Sort salary slips by month (January to December) based on postingDate
+        salarySlips.sort(Comparator.comparing(slip -> {
+            String date = slip.getPostingDate() != null ? slip.getPostingDate() : "";
+            if (date.isEmpty()) return "9999-99"; // Push null/empty dates to the end
+            try {
+                String[] parts = date.split(" ");
+                String monthName = parts[0];
+                String yearPart = parts.length > 1 ? parts[1] : "0000";
+                String monthNumber = FRENCH_MONTH_TO_NUMBER.getOrDefault(monthName, "99");
+                return yearPart + "-" + monthNumber;
+            } catch (Exception e) {
+                logger.warn("Invalid postingDate format: {}", date);
+                return "9999-99";
+            }
+        }));
+
+        List<SalarySlip> paginatedSalarySlips = paginationService.getPaginatedItems(salarySlips, page, pageSize);
+        int totalPages = paginationService.getTotalPages(salarySlips, pageSize);
+        List<Integer> pageNumbers = paginationService.getPageNumbers(page, totalPages, 5);
 
         Set<String> uniquePayDates = salarySlips.stream()
                 .map(slip -> slip.getPostingDate() != null ? slip.getPostingDate() : "")
@@ -147,10 +178,64 @@ public class PayrollController {
                 .collect(Collectors.toSet());
         int uniquePayDateCount = uniquePayDates.size();
 
-        model.addAttribute("salarySlips", salarySlips);
+        model.addAttribute("salarySlips", paginatedSalarySlips);
         model.addAttribute("selectedYear", year != null ? year : "");
         model.addAttribute("uniquePayDateCount", uniquePayDateCount);
-        model.addAttribute("activePage", "payroll");
+        model.addAttribute("currentPage", page);
+        model.addAttribute("pageSize", pageSize);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageNumbers", pageNumbers);
+        model.addAttribute("activePage", "payroll-months");
+
+        return "emp/payroll-months";
+    }
+
+    @PostMapping("/months")
+    public String filterPayrollMonths(
+            @RequestParam(value = "year", required = false) String year,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "12") int pageSize,
+            Model model) {
+
+        List<SalarySlip> salarySlips = payrollService.getMonthlyAggregatedSalarySlips(null, year);
+        if (salarySlips == null) {
+            salarySlips = new ArrayList<>();
+        }
+
+        // Sort salary slips by month (January to December) based on postingDate
+        salarySlips.sort(Comparator.comparing(slip -> {
+            String date = slip.getPostingDate() != null ? slip.getPostingDate() : "";
+            if (date.isEmpty()) return "9999-99";
+            try {
+                String[] parts = date.split(" ");
+                String monthName = parts[0];
+                String yearPart = parts.length > 1 ? parts[1] : "0000";
+                String monthNumber = FRENCH_MONTH_TO_NUMBER.getOrDefault(monthName, "99");
+                return yearPart + "-" + monthNumber;
+            } catch (Exception e) {
+                logger.warn("Invalid postingDate format: {}", date);
+                return "9999-99";
+            }
+        }));
+
+        List<SalarySlip> paginatedSalarySlips = paginationService.getPaginatedItems(salarySlips, page, pageSize);
+        int totalPages = paginationService.getTotalPages(salarySlips, pageSize);
+        List<Integer> pageNumbers = paginationService.getPageNumbers(page, totalPages, 5);
+
+        Set<String> uniquePayDates = salarySlips.stream()
+                .map(slip -> slip.getPostingDate() != null ? slip.getPostingDate() : "")
+                .filter(date -> !date.isEmpty())
+                .collect(Collectors.toSet());
+        int uniquePayDateCount = uniquePayDates.size();
+
+        model.addAttribute("salarySlips", paginatedSalarySlips);
+        model.addAttribute("selectedYear", year != null ? year : "");
+        model.addAttribute("uniquePayDateCount", uniquePayDateCount);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("pageSize", pageSize);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageNumbers", pageNumbers);
+        model.addAttribute("activePage", "payroll-months");
 
         return "emp/payroll-months";
     }
@@ -194,7 +279,7 @@ public class PayrollController {
         model.addAttribute("errorMessage", ex.getMessage());
         model.addAttribute("salarySlips", new ArrayList<SalarySlip>());
         model.addAttribute("selectedYear", "");
-        model.addAttribute("activePage", "payroll");
+        model.addAttribute("activePage", "payroll-months");
         return "emp/payroll-months";
     }
 
