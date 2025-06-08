@@ -1,10 +1,7 @@
 package com.example.erp.service;
 
-import com.example.erp.config.ErpNextConfig;
-import com.example.erp.entity.HrmsCsvImportRequest;
-import com.example.erp.entity.HrmsCsvImportResponse;
-import com.example.erp.entity.HrmsResetResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Base64;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Base64;
+import com.example.erp.config.ErpNextConfig;
+import com.example.erp.entity.HrmsCsvImportRequest;
+import com.example.erp.entity.HrmsCsvImportResponse;
+import com.example.erp.entity.HrmsResetResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class HrmsCsvImportService {
@@ -80,6 +81,7 @@ public class HrmsCsvImportService {
             return errorResponse;
 
         } catch (Exception e) {
+            System.out.println("Error" + e.getMessage());
             logger.error("Error importing CSV files", e);
             HrmsCsvImportResponse errorResponse = new HrmsCsvImportResponse();
             errorResponse.setSuccess(false);
@@ -123,4 +125,4 @@ public class HrmsCsvImportService {
             return errorResponse;
         }
     }
-}
+} 

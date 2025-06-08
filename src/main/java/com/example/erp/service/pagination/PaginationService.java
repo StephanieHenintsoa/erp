@@ -24,7 +24,9 @@ public class PaginationService<T> {
         if (pageSize <= 0) {
             return 1;
         }
-        return (int) Math.ceil((double) items.size() / pageSize);
+        int totalPages = (int) Math.ceil((double) items.size() / pageSize);
+        System.out.println("## TOTAL PAGE PAGINATION: " + totalPages);
+        return totalPages;
     }
 
     // generates list of page numbers for display

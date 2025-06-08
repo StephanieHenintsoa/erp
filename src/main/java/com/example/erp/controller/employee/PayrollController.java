@@ -2,6 +2,7 @@ package com.example.erp.controller.employee;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -14,10 +15,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import java.util.Set;
+
 import com.example.erp.entity.Employee;
 import com.example.erp.entity.salary.PayrollComponentsResponse;
 import com.example.erp.entity.salary.SalarySlip;
+import com.example.erp.service.pagination.PaginationService;
 import com.example.erp.service.salary.PayrollService;
 
 @Controller
@@ -29,10 +31,15 @@ public class PayrollController {
     @Autowired
     private PayrollService payrollService;
 
+    @Autowired
+    private PaginationService<SalarySlip> paginationService;
+
     @GetMapping
     public String showPayrollPage(
             @RequestParam(value = "month", required = false) String month,
             @RequestParam(value = "year", required = false) String year,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
             Model model) {
         List<Employee> employees = payrollService.getAllEmployees();
         if (employees == null) {
@@ -41,17 +48,36 @@ public class PayrollController {
         }
 
         List<SalarySlip> salarySlips = new ArrayList<>();
+        // Fetch all salary slips if month and year are not provided
         if (month != null && !month.isEmpty() && year != null && !year.isEmpty()) {
             salarySlips = payrollService.getFilteredSalarySlips(month, year);
-            if (salarySlips == null) {
-                salarySlips = new ArrayList<>();
-            }
+        } else {
+            salarySlips = payrollService.getFilteredSalarySlips(null, null);
+        }
+        if (salarySlips == null) {
+            salarySlips = new ArrayList<>();
         }
 
+        List<SalarySlip> paginatedSalarySlips = paginationService.getPaginatedItems(salarySlips, page, pageSize);
+        int totalPages = paginationService.getTotalPages(salarySlips, pageSize);
+        List<Integer> pageNumbers = paginationService.getPageNumbers(page, totalPages, 5);
+
+        Set<String> uniqueEmployees = salarySlips.stream()
+                .map(SalarySlip::getEmployee)
+                .collect(Collectors.toSet());
+        int uniqueEmployeeCount = uniqueEmployees.size();
+
         model.addAttribute("employees", employees);
-        model.addAttribute("salarySlips", salarySlips);
+        model.addAttribute("salarySlips", paginatedSalarySlips);
         model.addAttribute("selectedMonth", month != null ? month : "");
         model.addAttribute("selectedYear", year != null ? year : "");
+        model.addAttribute("uniqueEmployeeCount", uniqueEmployeeCount);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("pageSize", pageSize);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageNumbers", pageNumbers);
+        model.addAttribute("activePage", "payroll");
+
         return "emp/payroll";
     }
 
@@ -59,6 +85,8 @@ public class PayrollController {
     public String filterPayroll(
             @RequestParam(value = "month", required = false) String month,
             @RequestParam(value = "year", required = false) String year,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
             Model model) {
 
         List<Employee> employees = payrollService.getAllEmployees();
@@ -67,21 +95,30 @@ public class PayrollController {
         }
 
         List<SalarySlip> salarySlips = payrollService.getFilteredSalarySlips(month, year);
-
-        if (salarySlips == null || salarySlips.isEmpty()) {
-            throw new IllegalStateException("Aucune fiche de paie trouvée pour le mois " + month + " et l'année " + year);
+        if (salarySlips == null) {
+            salarySlips = new ArrayList<>();
         }
+
+        List<SalarySlip> paginatedSalarySlips = paginationService.getPaginatedItems(salarySlips, page, pageSize);
+        int totalPages = paginationService.getTotalPages(salarySlips, pageSize);
+        List<Integer> pageNumbers = paginationService.getPageNumbers(page, totalPages, 5);
+
         Set<String> uniqueEmployees = salarySlips.stream()
                 .map(SalarySlip::getEmployee)
                 .collect(Collectors.toSet());
         int uniqueEmployeeCount = uniqueEmployees.size();
-        
 
         model.addAttribute("employees", employees);
-        model.addAttribute("salarySlips", salarySlips);
+        model.addAttribute("salarySlips", paginatedSalarySlips);
         model.addAttribute("selectedMonth", month != null ? month : "");
         model.addAttribute("selectedYear", year != null ? year : "");
         model.addAttribute("uniqueEmployeeCount", uniqueEmployeeCount);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("pageSize", pageSize);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageNumbers", pageNumbers);
+        model.addAttribute("activePage", "payroll");
+
         return "emp/payroll";
     }
 
@@ -90,6 +127,7 @@ public class PayrollController {
         List<SalarySlip> salarySlips = new ArrayList<>();
         model.addAttribute("salarySlips", salarySlips);
         model.addAttribute("selectedYear", "");
+        model.addAttribute("activePage", "payroll");
         return "emp/payroll-months";
     }
 
@@ -99,19 +137,21 @@ public class PayrollController {
             Model model) {
 
         List<SalarySlip> salarySlips = payrollService.getMonthlyAggregatedSalarySlips(null, year);
-
-        if (salarySlips == null || salarySlips.isEmpty()) {
-            throw new IllegalStateException("Aucune fiche de paie trouvée pour l'année " + year);
+        if (salarySlips == null) {
+            salarySlips = new ArrayList<>();
         }
+
         Set<String> uniquePayDates = salarySlips.stream()
-        .map(slip -> slip.getPostingDate() != null ? slip.getPostingDate() : "")
-        .filter(date -> !date.isEmpty())
-        .collect(Collectors.toSet());
+                .map(slip -> slip.getPostingDate() != null ? slip.getPostingDate() : "")
+                .filter(date -> !date.isEmpty())
+                .collect(Collectors.toSet());
         int uniquePayDateCount = uniquePayDates.size();
 
         model.addAttribute("salarySlips", salarySlips);
         model.addAttribute("selectedYear", year != null ? year : "");
         model.addAttribute("uniquePayDateCount", uniquePayDateCount);
+        model.addAttribute("activePage", "payroll");
+
         return "emp/payroll-months";
     }
 
@@ -123,6 +163,7 @@ public class PayrollController {
         try {
             PayrollComponentsResponse components = payrollService.getPayrollComponents(year, month);
             model.addAttribute("components", components);
+            model.addAttribute("activePage", "payroll");
         } catch (Exception e) {
             model.addAttribute("errorMessage", "Erreur lors de la récupération des composants de salaire pour " + getMonthName(month) + " " + year);
             model.addAttribute("components", new PayrollComponentsResponse());
@@ -140,6 +181,7 @@ public class PayrollController {
             PayrollComponentsResponse components = payrollService.getPayrollComponentsEmp(year, month, employee);
             model.addAttribute("components", components);
             model.addAttribute("employee", employee);
+            model.addAttribute("activePage", "payroll");
         } catch (Exception e) {
             model.addAttribute("errorMessage", "Erreur lors de la récupération des composants de salaire pour l'employé " + employee + " pour " + getMonthName(month) + " " + year);
             model.addAttribute("components", new PayrollComponentsResponse());
@@ -152,12 +194,14 @@ public class PayrollController {
         model.addAttribute("errorMessage", ex.getMessage());
         model.addAttribute("salarySlips", new ArrayList<SalarySlip>());
         model.addAttribute("selectedYear", "");
+        model.addAttribute("activePage", "payroll");
         return "emp/payroll-months";
     }
 
     @GetMapping("/dashboard")
     public String showDashboard(@RequestParam(value = "year", defaultValue = "2025") String year, Model model) {
         model.addAttribute("selectedYear", year);
+        model.addAttribute("activePage", "dashboard");
         return "home/dashboard";
     }
 
