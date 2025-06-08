@@ -56,6 +56,8 @@
                         </select>
                     </div>
                     <div class="col-md-12">
+                        <input type="hidden" name="page" value="1"/>
+                        <input type="hidden" name="pageSize" th:value="${pageSize}"/>
                         <button type="submit" class="btn btn-primary">Filtrer</button>
                         <a th:href="@{/employees}" class="btn btn-secondary">Réinitialiser</a>
                     </div>
@@ -96,10 +98,26 @@
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(employees)}">
-                            <td colspan="10" class="text-center">Aucun employé trouvé.</td>
+                            <td colspan="11" class="text-center">Aucun employé trouvé.</td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            <!-- Pagination Controls -->
+            <div th:if="${totalPages > 1}" class="pagination-container mt-4">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                            <a class="page-link" th:href="@{/employees(minDate=${minDate},maxDate=${maxDate},status=${selectedStatus},designation=${selectedDesignation},department=${selectedDepartment},page=${currentPage - 1},pageSize=${pageSize})}">Précédent</a>
+                        </li>
+                        <li class="page-item" th:each="pageNum : ${pageNumbers}" th:classappend="${pageNum == currentPage} ? 'active'">
+                            <a class="page-link" th:href="@{/employees(minDate=${minDate},maxDate=${maxDate},status=${selectedStatus},designation=${selectedDesignation},department=${selectedDepartment},page=${pageNum},pageSize=${pageSize})}" th:text="${pageNum}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                            <a class="page-link" th:href="@{/employees(minDate=${minDate},maxDate=${maxDate},status=${selectedStatus},designation=${selectedDesignation},department=${selectedDepartment},page=${currentPage + 1},pageSize=${pageSize})}">Suivant</a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>

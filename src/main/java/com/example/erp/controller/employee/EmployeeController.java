@@ -17,6 +17,7 @@ import com.example.erp.entity.Designation;
 import com.example.erp.entity.Employee;
 import com.example.erp.entity.salary.SalarySlip;
 import com.example.erp.service.employee.EmployeeService;
+import com.example.erp.service.pagination.PaginationService;
 import com.example.erp.service.salary.SalarySlipService;
 
 @Controller
@@ -27,6 +28,9 @@ public class EmployeeController {
     
     @Autowired
     private SalarySlipService salarySlipService;
+    
+    @Autowired
+    private PaginationService<Employee> paginationService;
 
     @GetMapping("/employees")
     public String getAllEmployees(
@@ -35,13 +39,19 @@ public class EmployeeController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String designation,
             @RequestParam(required = false) String department,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
             Model model) {
-        List<Employee> employees = employeeService.getAllEmployees(minDate, maxDate, status, designation, department);
+        List<Employee> allEmployees = employeeService.getAllEmployees(minDate, maxDate, status, designation, department);
+        List<Employee> paginatedEmployees = paginationService.getPaginatedItems(allEmployees, page, pageSize);
+        int totalPages = paginationService.getTotalPages(allEmployees, pageSize);        
+        List<Integer> pageNumbers = paginationService.getPageNumbers(page, totalPages, 5);
+
         List<Designation> designations = employeeService.getAllDesignations();
         List<Department> departments = employeeService.getAllDepartments();
         List<String> statuses = Arrays.asList("Active", "Inactive", "Suspended", "Left");
 
-        model.addAttribute("employees", employees);
+        model.addAttribute("employees", paginatedEmployees);
         model.addAttribute("designations", designations);
         model.addAttribute("departments", departments);
         model.addAttribute("statuses", statuses);
@@ -50,6 +60,10 @@ public class EmployeeController {
         model.addAttribute("selectedStatus", status);
         model.addAttribute("selectedDesignation", designation);
         model.addAttribute("selectedDepartment", department);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("pageSize", pageSize);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("pageNumbers", pageNumbers);
         model.addAttribute("activePage", "employees");
 
         return "emp/employees";
@@ -78,7 +92,6 @@ public class EmployeeController {
         }
 
         List<SalarySlip> salarySlips = salarySlipService.getSalarySlipsByEmployeeAndMonthYear(name, null, null);
-        // Fetch detailed data for each salary slip
         List<SalarySlip> detailedSlips = new ArrayList<>();
         for (SalarySlip slip : salarySlips) {
             SalarySlip detailedSlip = salarySlipService.getSalarySlipWithDetails(slip.getName());
@@ -117,7 +130,6 @@ public class EmployeeController {
         List<SalarySlip> salarySlips = new ArrayList<>();
         try {
             salarySlips = salarySlipService.getSalarySlipsByEmployeeAndMonthYear(name, month, year);
-            // Fetch detailed data for each salary slip
             List<SalarySlip> detailedSlips = new ArrayList<>();
             for (SalarySlip slip : salarySlips) {
                 SalarySlip detailedSlip = salarySlipService.getSalarySlipWithDetails(slip.getName());
