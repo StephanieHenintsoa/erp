@@ -1,7 +1,5 @@
 package com.example.erp.controller;
 
-import jakarta.servlet.http.HttpSession;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +14,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.erp.entity.HrmsCsvImportResponse;
 import com.example.erp.entity.HrmsResetResponse;
 import com.example.erp.service.HrmsCsvImportService;
+import com.example.erp.service.auth.LoginService;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/api/hrms-csv-import")
@@ -27,7 +28,10 @@ public class HrmsCsvImportController {
     private HrmsCsvImportService hrmsCsvImportService;
 
     @GetMapping("/")
-    public String getImportForm(Model model) {
+    public String getImportForm(Model model, HttpSession session) {
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
         return "views/hrms-csv-import/hrms-csv-import";
     }
 
@@ -38,6 +42,9 @@ public class HrmsCsvImportController {
             @RequestParam("payrollCsv") MultipartFile payrollCsv,
             Model model,
             HttpSession session) {
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
         try {
             HrmsCsvImportResponse response = hrmsCsvImportService.importCsvFiles(
                     employeesCsv, salaryStructureCsv, payrollCsv);
@@ -67,6 +74,9 @@ public class HrmsCsvImportController {
     
     @PostMapping("/reset") 
     public String resetHrmsData(Model model, HttpSession session) {
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
         try {
             HrmsResetResponse response = hrmsCsvImportService.resetHrmsData();
 

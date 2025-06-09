@@ -64,7 +64,6 @@ public class PayslipDownloadController {
     public ResponseEntity<InputStreamResource> downloadPayslip(
             @RequestParam String employeeName,
             @RequestParam String slipName) {
-        
         try {
             logger.info("Téléchargement PDF demandé - Employé: '{}', Fiche: '{}'", employeeName, slipName);
             

@@ -22,8 +22,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.example.erp.entity.Employee;
 import com.example.erp.entity.salary.PayrollComponentsResponse;
 import com.example.erp.entity.salary.SalarySlip;
+import com.example.erp.service.auth.LoginService;
 import com.example.erp.service.pagination.PaginationService;
 import com.example.erp.service.salary.PayrollService;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/payroll")
@@ -60,7 +63,13 @@ public class PayrollController {
             @RequestParam(value = "year", required = false) String year,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,
-            Model model) {
+            Model model, 
+            HttpSession session) 
+    {
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
+
         List<Employee> employees = payrollService.getAllEmployees();
         if (employees == null) {
             employees = new ArrayList<>();
@@ -106,8 +115,12 @@ public class PayrollController {
             @RequestParam(value = "year", required = false) String year,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int pageSize,
-            Model model) {
-
+            Model model,
+            HttpSession session) {
+        
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
         List<Employee> employees = payrollService.getAllEmployees();
         if (employees == null) {
             employees = new ArrayList<>();
@@ -146,7 +159,12 @@ public class PayrollController {
             @RequestParam(value = "year", required = false) String year,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "12") int pageSize,
-            Model model) {
+            Model model,
+            HttpSession session) {
+    
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
         List<SalarySlip> salarySlips = payrollService.getMonthlyAggregatedSalarySlips(null, year);
         if (salarySlips == null) {
             salarySlips = new ArrayList<>();
@@ -195,8 +213,12 @@ public class PayrollController {
             @RequestParam(value = "year", required = false) String year,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "12") int pageSize,
-            Model model) {
-
+            Model model,
+            HttpSession session) {
+            
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
         List<SalarySlip> salarySlips = payrollService.getMonthlyAggregatedSalarySlips(null, year);
         if (salarySlips == null) {
             salarySlips = new ArrayList<>();
@@ -244,7 +266,13 @@ public class PayrollController {
     public String showPayrollComponents(
             @RequestParam(value = "year") String year,
             @RequestParam(value = "month") String month,
-            Model model) {
+            Model model,
+            HttpSession session) {
+
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
+
         try {
             PayrollComponentsResponse components = payrollService.getPayrollComponents(year, month);
             model.addAttribute("components", components);
@@ -261,7 +289,12 @@ public class PayrollController {
             @RequestParam(value = "year") String year,
             @RequestParam(value = "month") String month,
             @RequestParam(value = "employee") String employee,
-            Model model) {
+            Model model,
+            HttpSession session) {
+
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
         try {
             PayrollComponentsResponse components = payrollService.getPayrollComponentsEmp(year, month, employee);
             model.addAttribute("components", components);
@@ -275,7 +308,10 @@ public class PayrollController {
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public String handleIllegalStateException(IllegalStateException ex, Model model) {
+    public String handleIllegalStateException(IllegalStateException ex, Model model, HttpSession session) {
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
         model.addAttribute("errorMessage", ex.getMessage());
         model.addAttribute("salarySlips", new ArrayList<SalarySlip>());
         model.addAttribute("selectedYear", "");
@@ -284,7 +320,10 @@ public class PayrollController {
     }
 
     @GetMapping("/dashboard")
-    public String showDashboard(@RequestParam(value = "year", defaultValue = "2025") String year, Model model) {
+    public String showDashboard(@RequestParam(value = "year", defaultValue = "2025") String year, Model model, HttpSession session) {
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
         model.addAttribute("selectedYear", year);
         model.addAttribute("activePage", "dashboard");
         return "home/dashboard";

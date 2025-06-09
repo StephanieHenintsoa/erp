@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import com.example.erp.dto.CsvImportRequest;
 import com.example.erp.dto.CsvImportResponse;
+import com.example.erp.service.auth.LoginService;
 import com.example.erp.service.csv.CsvImportService;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class CsvImportController {
@@ -23,13 +26,19 @@ public class CsvImportController {
     }
 
     @GetMapping("/csv-import")
-    public String showImportForm(Model model) {
+    public String showImportForm(Model model, HttpSession session) {
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
         model.addAttribute("csvImportRequest", new CsvImportRequest());
         return "/import/csv-import";
     }
 
     @PostMapping("/csv-import")
-    public String handleCsvImport(@ModelAttribute CsvImportRequest request, Model model) {
+    public String handleCsvImport(@ModelAttribute CsvImportRequest request, Model model, HttpSession session) {
+        if (!LoginService.isAuthenticated(session)) {
+            return "redirect:/"; 
+        }
         CsvImportResponse response = csvImportService.importCsvFiles(request);
         
         model.addAttribute("response", response);
