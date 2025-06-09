@@ -172,7 +172,7 @@
                                     </td>
                                     <td class="summary-value amount-positive">
                                         <span th:with="totalGross=${#aggregates.sum(salarySlips.![grossPay ?: 0])}"
-                                              th:text="${#numbers.formatDecimal(totalGross, 1, 2, 'COMMA') + ' €'} ?: '0,00 €'"></span>
+                                              th:text="${#numbers.formatInteger(totalGross, 3, 'COMMA') + ' €'} ?: '0 €'"></span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -187,9 +187,9 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="summary-value" th:classappend="${#aggregates.sum(salarySlips.![netPay ?: 0]) >= 0} ? 'amount-positive' : 'amount-negative'">
+                                    <td class="summary-value" th:classappend="${#aggregates.sum(salarySlips.![netPay ?: 0]) >= 0 ? 'amount-positive' : 'amount-negative'}">
                                         <span th:with="totalNet=${#aggregates.sum(salarySlips.![netPay ?: 0])}"
-                                              th:text="${#numbers.formatDecimal(totalNet, 1, 2, 'COMMA') + ' €'} ?: '0,00 €'"></span>
+                                              th:text="${#numbers.formatInteger(totalNet, 3, 'COMMA') + ' €'} ?: '0 €'"></span>
                                     </td>
                                     <td></td>
                                     <td></td>
@@ -214,9 +214,9 @@
                     <tbody>
                         <tr th:each="slip : ${salarySlips}">
                             <td th:text="${slip.postingDate != null ? slip.postingDate : 'N/A'}"></td>
-                            <td th:text="${slip.grossPay != null ? (#numbers.formatDecimal(slip.grossPay, 1, 2, 'COMMA') + ' €') : '0,00 €'}"></td>
+                            <td th:text="${slip.grossPay != null ? (#numbers.formatInteger(slip.grossPay, 3, 'COMMA') + ' €') : '0 €'}"></td>
                             <td th:class="${slip.netPay != null and slip.netPay >= 0} ? 'amount-positive' : 'amount-negative'"
-                                th:text="${slip.netPay != null ? (#numbers.formatDecimal(slip.netPay, 1, 2, 'COMMA') + ' €') : '0,00 €'}"></td>
+                                th:text="${slip.netPay != null ? (#numbers.formatInteger(slip.netPay, 3, 'COMMA') + ' €') : '0 €'}"></td>
                             <td>
                                 <div th:with="monthName=${#strings.substringBefore(slip.postingDate, ' ')},
                                              year=${#strings.substringAfter(slip.postingDate, ' ')},
@@ -229,8 +229,7 @@
                                                           monthName == 'Juillet' ? '07' : 
                                                           monthName == 'Août' ? '08' : 
                                                           monthName == 'Septembre' ? '09' : 
-                                                          monthName == 'Octobre' ? '10' : 
-                                                          monthName == 'Novembre' ? '11' : '12'}">
+                                                          monthName == 'Octobre' ? '10' : '11'}">
                                     <a th:href="@{/payroll(month=${monthNumber},year=${year},page=1,pageSize=10)}"
                                        class="btn btn-sm btn-success">
                                         <i class="fas fa-eye"></i> Voir détails salaire net

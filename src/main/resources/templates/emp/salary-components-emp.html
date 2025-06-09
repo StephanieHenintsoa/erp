@@ -64,7 +64,7 @@
                     <tbody>
                         <tr th:each="earning : ${components.earnings}">
                             <td th:text="${earning.salaryComponent}"></td>
-                            <td th:text="${#numbers.formatDecimal(earning.amount, 1, 2)}"></td>
+                            <td th:text="${earning.amount != null ? (#numbers.formatInteger(earning.amount, 3, 'COMMA') + ' ' + components.currency) : ('0 ' + components.currency)}"></td>
                         </tr>
                         <tr th:if="${components.earnings == null or #lists.isEmpty(components.earnings)}">
                             <td colspan="2" class="text-center">Aucun gain trouvé</td>
@@ -73,7 +73,7 @@
                     <tfoot>
                         <tr class="total-row">
                             <td class="text-end"><strong>Total Gains:</strong></td>
-                            <td class="total-amount" th:text="${#numbers.formatDecimal(components.totalGross, 1, 2)} + ' ' + ${components.currency}"></td>
+                            <td class="total-amount" th:text="${components.totalGross != null ? (#numbers.formatInteger(components.totalGross, 3, 'COMMA') + ' ' + components.currency) : ('0 ' + components.currency)}"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -92,7 +92,7 @@
                     <tbody>
                         <tr th:each="deduction : ${components.deductions}">
                             <td th:text="${deduction.salaryComponent}"></td>
-                            <td th:text="${#numbers.formatDecimal(deduction.amount, 1, 2)}"></td>
+                            <td th:text="${deduction.amount != null ? (#numbers.formatInteger(deduction.amount, 3, 'COMMA') + ' ' + components.currency) : ('0 ' + components.currency)}"></td>
                         </tr>
                         <tr th:if="${components.deductions == null or #lists.isEmpty(components.deductions)}">
                             <td colspan="2" class="text-center">Aucune déduction trouvée</td>
@@ -101,7 +101,7 @@
                     <tfoot>
                         <tr class="total-row">
                             <td class="text-end"><strong>Total Déductions:</strong></td>
-                            <td class="total-amount" th:text="${#numbers.formatDecimal(components.totalDeduction, 1, 2)} + ' ' + ${components.currency}"></td>
+                            <td class="total-amount" th:text="${components.totalDeduction != null ? (#numbers.formatInteger(components.totalDeduction, 3, 'COMMA') + ' ' + components.currency) : ('0 ' + components.currency)}"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -113,10 +113,9 @@
                     <tbody>
                         <tr>
                             <td class="text-end"><strong>Total Net:</strong></td>
-                            <td class="total-amount" th:class="${components.totalNet >= 0} ? 'amount-positive' : 'amount-negative'"
-                                th:text="${#numbers.formatDecimal(components.totalNet, 1, 2)} + ' ' + ${components.currency}"></td>
+                            <td class="total-amount" th:class="${components.totalNet >= 0 ? 'amount-positive' : 'amount-negative'}"
+                                th:text="${components.totalNet != null ? (#numbers.formatInteger(components.totalNet, 3, 'COMMA') + ' ' + components.currency) : ('0 ' + components.currency)}"></td>
                         </tr>
-                        
                     </tbody>
                 </table>
             </div>

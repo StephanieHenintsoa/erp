@@ -1,17 +1,12 @@
 package com.example.erp.controller.employee;
 
-import com.example.erp.entity.Employee;
-import com.example.erp.entity.salary.SalarySlip;
-import com.example.erp.service.employee.EmployeeService;
-import com.example.erp.service.salary.SalarySlipService;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.Cell;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.properties.TextAlignment;
-import com.itextpdf.layout.properties.UnitValue;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,17 +19,40 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.text.DecimalFormat;
+import com.example.erp.entity.Employee;
+import com.example.erp.entity.salary.SalarySlip;
+import com.example.erp.service.employee.EmployeeService;
+import com.example.erp.service.salary.SalarySlipService;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.TextAlignment;
+import com.itextpdf.layout.properties.UnitValue;
 
 @Controller
 @RequestMapping("/api")
 public class PayslipDownloadController {
 
     private static final Logger logger = LoggerFactory.getLogger(PayslipDownloadController.class);
-    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#,##0.00");
+    
+    // Updated formatter for better number formatting
+    private static final DecimalFormat DECIMAL_FORMAT;
+    
+    static {
+        // Create custom DecimalFormatSymbols for French locale (space as grouping separator)
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRENCH);
+        symbols.setGroupingSeparator(' '); // Use space instead of comma for thousands
+        symbols.setDecimalSeparator(',');   // Use comma for decimal separator (French style)
+        
+        // Create formatter with custom symbols
+        DECIMAL_FORMAT = new DecimalFormat("#,##0.00", symbols);
+        
+        // Alternative: For English-style formatting with comma as thousands separator
+        // DECIMAL_FORMAT = new DecimalFormat("#,##0.00", new DecimalFormatSymbols(Locale.US));
+    }
 
     @Autowired
     private EmployeeService employeeService;
@@ -163,7 +181,7 @@ public class PayslipDownloadController {
                     String component = safeString(earning.getSalaryComponent()) + 
                                        (earning.getAbbr() != null ? " (" + safeString(earning.getAbbr()) + ")" : "");
                     earningsTable.addCell(new Cell().add(new Paragraph(component)));
-                    earningsTable.addCell(new Cell().add(new Paragraph(formatAmount(earning.getAmount()))
+                    earningsTable.addCell(new Cell().add(new Paragraph(formatAmount(earning.getAmount()) + " €")
                             .setTextAlignment(TextAlignment.RIGHT)));
                 }
             } else {
@@ -191,7 +209,7 @@ public class PayslipDownloadController {
                     String component = safeString(deduction.getSalaryComponent()) + 
                                        (deduction.getAbbr() != null ? " (" + safeString(deduction.getAbbr()) + ")" : "");
                     deductionsTable.addCell(new Cell().add(new Paragraph(component)));
-                    deductionsTable.addCell(new Cell().add(new Paragraph(formatAmount(deduction.getAmount()))
+                    deductionsTable.addCell(new Cell().add(new Paragraph(formatAmount(deduction.getAmount()) + " €")
                             .setTextAlignment(TextAlignment.RIGHT)));
                 }
             } else {
@@ -241,6 +259,13 @@ public class PayslipDownloadController {
         return "bulletin_paie_" + cleanEmployeeName + "_" + cleanSlipName + ".pdf";
     }
 
+    /**
+     * Formats monetary amounts with proper thousands separator and decimal places
+     * Examples:
+     * - 100000.0 -> "100 000,00" (French style)
+     * - 1234.56 -> "1 234,56"
+     * - 0 -> "0,00"
+     */
     private String formatAmount(Double amount) {
         if (amount == null) {
             return "0,00";
