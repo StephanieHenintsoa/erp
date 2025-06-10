@@ -49,16 +49,14 @@ public class EmployeeSalaryService {
         MONTHS.put("Décembre", 12);
     }
 
-    // create headers with authorization token
     private HttpHeaders createHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "token " + ErpNextConfig.API_KEY + ":" + ErpNextConfig.API_SECRET);
-        headers.set("Content-Type", "application/json"); // Use set() instead of setContentType()
+        headers.set("Content-Type", "application/json"); 
         headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
         return headers;
     }
 
-    // fetch all employees from ERP Next
     public List<Map<String, Object>> getAllEmployees() {
         HttpHeaders headers = createHeaders();
         HttpEntity<String> entity = new HttpEntity<>(headers);
@@ -90,7 +88,6 @@ public class EmployeeSalaryService {
         }
     }
 
-    // generate salaries for the specified period
     public void generateSalaries(String employee, String moisDebut, int anneeDebut, String moisFin, int anneeFin) {
         YearMonth start = YearMonth.of(anneeDebut, MONTHS.get(moisDebut));
         YearMonth end = YearMonth.of(anneeFin, MONTHS.get(moisFin));
@@ -99,13 +96,11 @@ public class EmployeeSalaryService {
             throw new IllegalStateException("La date de début doit être antérieure ou égale à la date de fin.");
         }
 
-        // fetch reference salary (latest salary before start date)
         Map<String, Object> referenceSalary = getReferenceSalary(employee, start);
         if (referenceSalary == null) {
             throw new IllegalStateException("Aucun salaire de référence trouvé avant " + moisDebut + " " + anneeDebut);
         }
 
-        // iterate through each month in the period
         YearMonth current = start;
         while (!current.isAfter(end)) {
             if (!hasSalaryForMonth(employee, current)) {
@@ -115,12 +110,10 @@ public class EmployeeSalaryService {
         }
     }
 
-    // fetch the latest salary before the start date
     private Map<String, Object> getReferenceSalary(String employee, YearMonth start) {
         HttpHeaders headers = createHeaders();
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        // Use ArrayList instead of Arrays.asList for better compatibility
         List<List<String>> filters = new ArrayList<>();
         filters.add(Arrays.asList("employee", "=", employee));
         filters.add(Arrays.asList("posting_date", "<", start.atDay(1).toString()));
@@ -162,16 +155,14 @@ public class EmployeeSalaryService {
         }
     }
 
-    // check if a salary exists for the given month
     private boolean hasSalaryForMonth(String employee, YearMonth month) {
         HttpHeaders headers = createHeaders();
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        // Use ArrayList and ensure proper data types for filters
         List<List<Object>> filters = new ArrayList<>();
         filters.add(Arrays.asList("employee", "=", employee));
-        filters.add(Arrays.asList("month", "=", month.getMonthValue())); // Use integer directly
-        filters.add(Arrays.asList("year", "=", month.getYear())); // Use integer directly
+        filters.add(Arrays.asList("month", "=", month.getMonthValue())); 
+        filters.add(Arrays.asList("year", "=", month.getYear())); 
 
         try {
             String filtersJson = objectMapper.writeValueAsString(filters);
@@ -200,21 +191,18 @@ public class EmployeeSalaryService {
             throw new RuntimeException("Error processing JSON for ERPNext Salary Slip API call", e);
         } catch (RestClientException e) {
             System.err.println("RestClientException in hasSalaryForMonth: " + e.getMessage());
-            // Log the error but don't fail the entire process
             return false;
         }
     }
 
-    // create a new salary record in ERP Next
     private void createSalaryRecord(String employee, YearMonth month, Map<String, Object> referenceSalary) {
         HttpHeaders headers = createHeaders();
         Map<String, Object> salaryData = new HashMap<>();
         salaryData.put("employee", employee);
-        salaryData.put("month", month.getMonthValue()); // Use integer directly
-        salaryData.put("year", month.getYear()); // Use integer directly
+        salaryData.put("month", month.getMonthValue()); 
+        salaryData.put("year", month.getYear()); 
         salaryData.put("gross_pay", referenceSalary.get("gross_pay"));
         
-        // Add additional required fields that might be needed
         salaryData.put("start_date", month.atDay(1).toString());
         salaryData.put("end_date", month.atEndOfMonth().toString());
         salaryData.put("posting_date", month.atDay(1).toString());
@@ -222,12 +210,7 @@ public class EmployeeSalaryService {
         try {
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(salaryData, headers);
             String url = ERP_NEXT_API_URL + "Salary Slip";
-            
-            System.out.println("Creating salary record with data: " + objectMapper.writeValueAsString(salaryData));
-            
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
-            System.out.println("Successfully created salary record for " + employee + " - " + month);
-            
         } catch (RestClientException e) {
             System.err.println("Error creating salary record: " + e.getMessage());
             throw new RuntimeException("Error creating salary record in ERPNext: " + e.getMessage(), e);

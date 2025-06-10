@@ -19,13 +19,11 @@ public class EmployeeSalaryController {
     @Autowired
     private EmployeeSalaryService employeeSalaryService;
 
-    // list of months for dropdowns
     private static final List<String> MONTHS = Arrays.asList(
         "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
         "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
     );
 
-    // display salary generation form
     @GetMapping("/generate-salary")
     public String showGenerateSalaryForm(Model model) {
         model.addAttribute("months", MONTHS);
@@ -34,7 +32,6 @@ public class EmployeeSalaryController {
         return "/emp/generate-salary";
     }
 
-    // handle salary generation form submission
     @PostMapping("/generate-salary")
     public String generateSalary(
         @RequestParam String employee,
