@@ -82,9 +82,9 @@ public class EmployeeSalaryService {
                 throw new RuntimeException("Invalid response format from ERPNext API");
             }
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error processing JSON for ERPNext Employee API call", e);
+            throw new RuntimeException("Error", e);
         } catch (RestClientException e) {
-            throw new RuntimeException("Error calling ERPNext Employee API: " + e.getMessage(), e);
+            throw new RuntimeException("Error: " + e.getMessage(), e);
         }
     }
 
@@ -130,9 +130,7 @@ public class EmployeeSalaryService {
                     .queryParam("order_by", "posting_date desc")
                     .queryParam("limit_page_length", "1");
 
-            // Use build(false) to avoid double encoding
             String finalUrl = builder.build(false).toUriString();
-            System.out.println("Reference salary URL: " + finalUrl);
 
             ResponseEntity<Map> response = restTemplate.exchange(
                 finalUrl,
@@ -149,9 +147,9 @@ public class EmployeeSalaryService {
                 return null;
             }
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error processing JSON for ERPNext Salary Slip API call", e);
+            throw new RuntimeException("Error", e);
         } catch (RestClientException e) {
-            throw new RuntimeException("Error calling ERPNext Salary Slip API: " + e.getMessage(), e);
+            throw new RuntimeException("Error: " + e.getMessage(), e);
         }
     }
 
@@ -186,9 +184,8 @@ public class EmployeeSalaryService {
                 return false;
             }
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error processing JSON for ERPNext Salary Slip API call", e);
+            throw new RuntimeException("Error ", e);
         } catch (RestClientException e) {
-            System.err.println("RestClientException in hasSalaryForMonth: " + e.getMessage());
             return false;
         }
     }
@@ -210,8 +207,8 @@ public class EmployeeSalaryService {
             String url = ERP_NEXT_API_URL + "Salary Slip";
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
         } catch (RestClientException e) {
-            System.err.println("Error creating salary record: " + e.getMessage());
-            throw new RuntimeException("Error creating salary record in ERPNext: " + e.getMessage(), e);
+            System.err.println("Error : " + e.getMessage());
+            throw new RuntimeException("Error : " + e.getMessage(), e);
         }
     }
 }
