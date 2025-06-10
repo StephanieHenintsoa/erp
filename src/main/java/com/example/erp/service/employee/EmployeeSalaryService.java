@@ -93,12 +93,12 @@ public class EmployeeSalaryService {
         YearMonth end = YearMonth.of(anneeFin, MONTHS.get(moisFin));
 
         if (start.isAfter(end)) {
-            throw new IllegalStateException("La date de début doit être antérieure ou égale à la date de fin.");
+            throw new IllegalStateException("Erreur date deb doit etre sup a date fin");
         }
 
         Map<String, Object> referenceSalary = getReferenceSalary(employee, start);
         if (referenceSalary == null) {
-            throw new IllegalStateException("Aucun salaire de référence trouvé avant " + moisDebut + " " + anneeDebut);
+            throw new IllegalStateException("PAs de salaire " + moisDebut + " " + anneeDebut);
         }
 
         YearMonth current = start;
@@ -171,8 +171,6 @@ public class EmployeeSalaryService {
                     .queryParam("filters", filtersJson);
 
             String finalUrl = builder.build(false).toUriString();
-            System.out.println("Checking salary for month URL: " + finalUrl);
-
             ResponseEntity<Map> response = restTemplate.exchange(
                 finalUrl,
                 HttpMethod.GET,

@@ -30,6 +30,9 @@
                 <li class="nav-item" th:classappend="${activePage == 'generateSalary'} ? 'active'">
                     <a th:href="@{/generate-salary}"><i class="fas fa-money-check-alt"></i> Générer Salaires</a>
                 </li>
+                <li class="nav-item" th:classappend="${activePage == 'updateBaseSalary'} ? 'active'">
+                    <a th:href="@{/update-base-salary}"><i class="fas fa-money-bill-wave"></i> Modifier Salaire de Base</a>
+                </li>
                 <li class="nav-item">
                     <form th:action="@{/logout}" method="post">
                         <button type="submit" class="nav-link btn btn-link"><i class="fas fa-sign-out-alt"></i> Log Out</button>
