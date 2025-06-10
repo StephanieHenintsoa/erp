@@ -20,7 +20,6 @@ public class UpdateBaseSalaryController {
     @Autowired
     private SalaryComponentService salaryComponentService;
 
-    // display form for updating base salary
     @GetMapping("/update-base-salary")
     public String showUpdateBaseSalaryForm(Model model) {
         model.addAttribute("salaryComponents", salaryComponentService.getAllSalaryComponents());
@@ -28,7 +27,6 @@ public class UpdateBaseSalaryController {
         return "/emp/update-base-salary";
     }
 
-    // handle form submission for updating base salary
     @PostMapping("/update-base-salary")
     public String updateBaseSalary(
         @RequestParam double newBaseSalary,
@@ -41,11 +39,11 @@ public class UpdateBaseSalaryController {
             int updatedCount = updateBaseSalaryService.updateBaseSalaries(
                 newBaseSalary, salaryComponent, comparisonOperator, threshold
             );
-            redirectAttributes.addFlashAttribute("successMessage", "Salaires de base mis à jour pour " + updatedCount + " employés.");
+            redirectAttributes.addFlashAttribute("successMessage", "Mis a jour ");
         } catch (IllegalStateException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Erreur lors de la mise à jour des salaires de base.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Erreur MAJ");
         }
         return "redirect:/update-base-salary";
     }

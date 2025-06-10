@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -28,8 +26,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class UpdateBaseSalaryService {
 
-    private static final Logger logger = LoggerFactory.getLogger(UpdateBaseSalaryService.class);
-
     @Autowired
     private RestTemplate restTemplate;
 
@@ -44,68 +40,59 @@ public class UpdateBaseSalaryService {
         return headers;
     }
 
-    // update base salaries for employees meeting the criteria
     public int updateBaseSalaries(double newBaseSalary, String salaryComponent, String comparisonOperator, double threshold) {
-        // validate comparison operator
         if (!"greater".equals(comparisonOperator) && !"less".equals(comparisonOperator)) {
             throw new IllegalArgumentException("Opérateur de comparaison invalide: " + comparisonOperator);
         }
 
-        // fetch salary slips with deductions and earnings
         List<SalarySlip> salarySlips = getSalarySlipsWithComponents();
-        List<String> eligibleEmployees = new ArrayList<>();
+        List<String> listEmpMarina = new ArrayList<>();
 
-        // identify employees meeting the criteria
         for (SalarySlip slip : salarySlips) {
-            boolean meetsCriteria = false;
-            // check deductions
+            boolean marina = false;
             if (slip.getDeductions() != null) {
                 for (SalaryDetail deduction : slip.getDeductions()) {
                     if (salaryComponent.equals(deduction.getSalaryComponent())) {
                         if (("greater".equals(comparisonOperator) && deduction.getAmount() > threshold) ||
                             ("less".equals(comparisonOperator) && deduction.getAmount() < threshold)) {
-                            meetsCriteria = true;
+                            marina = true;
                             break;
                         }
                     }
                 }
             }
-            // check earnings if not found in deductions
-            if (!meetsCriteria && slip.getEarnings() != null) {
+            if (!marina && slip.getEarnings() != null) {
                 for (SalaryDetail earning : slip.getEarnings()) {
                     if (salaryComponent.equals(earning.getSalaryComponent())) {
                         if (("greater".equals(comparisonOperator) && earning.getAmount() > threshold) ||
                             ("less".equals(comparisonOperator) && earning.getAmount() < threshold)) {
-                            meetsCriteria = true;
+                            marina = true;
                             break;
                         }
                     }
                 }
             }
-            if (meetsCriteria) {
-                eligibleEmployees.add(slip.getEmployee());
+            if (marina) {
+                listEmpMarina.add(slip.getEmployee());
             }
         }
 
-        if (eligibleEmployees.isEmpty()) {
-            throw new IllegalStateException("Aucun employé ne correspond aux critères spécifiés.");
+        if (listEmpMarina.isEmpty()) {
+            throw new IllegalStateException("Aucun emp trouve");
         }
 
-        // update base salary for each eligible employee
         int updatedCount = 0;
-        for (String employee : eligibleEmployees) {
+        for (String employee : listEmpMarina) {
             try {
                 updateBaseSalaryForEmployee(employee, newBaseSalary);
                 updatedCount++;
             } catch (RestClientException e) {
-                logger.error("Failed to update base salary for employee {}: {}", employee, e.getMessage());
             }
         }
 
         return updatedCount;
     }
 
-    // fetch salary slips with earnings and deductions
     private List<SalarySlip> getSalarySlipsWithComponents() {
         HttpHeaders headers = createHeaders();
         HttpEntity<String> entity = new HttpEntity<>(headers);
@@ -118,7 +105,6 @@ public class UpdateBaseSalaryService {
                     .queryParam("fields", fieldsJson);
 
             String finalUrl = builder.build(false).toUriString();
-            logger.debug("Fetching salary slips from ERP Next: {}", finalUrl);
 
             ResponseEntity<SalarySlipResponse> response = restTemplate.exchange(
                 finalUrl,
@@ -130,27 +116,22 @@ public class UpdateBaseSalaryService {
             if (response.getBody() != null && response.getBody().getData() != null) {
                 return response.getBody().getData();
             } else {
-                logger.warn("No salary slips found in ERPNext");
                 return new ArrayList<>();
             }
         } catch (JsonProcessingException e) {
-            logger.error("Error processing JSON for ERPNext Salary Slip API call", e);
-            throw new RuntimeException("Error processing JSON for ERPNext Salary Slip API call", e);
+            throw new RuntimeException("Error", e);
         } catch (RestClientException e) {
-            logger.error("Error calling ERPNext Salary Slip API: {}", e.getMessage());
-            throw new RuntimeException("Error calling ERPNext Salary Slip API: " + e.getMessage(), e);
+            throw new RuntimeException("Error " + e.getMessage(), e);
         }
     }
 
-    // update base salary in Salary Structure Assignment
     private void updateBaseSalaryForEmployee(String employee, double newBaseSalary) {
         HttpHeaders headers = createHeaders();
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        // fetch the latest salary structure assignment
         List<List<Object>> filters = Arrays.asList(
             Arrays.asList("employee", "=", employee),
-            Arrays.asList("docstatus", "=", 1) // only submitted assignments
+            Arrays.asList("docstatus", "=", 1) 
         );
         List<String> fields = Arrays.asList("name", "base");
 
@@ -165,7 +146,6 @@ public class UpdateBaseSalaryService {
                     .queryParam("limit_page_length", "1");
 
             String finalUrl = builder.build(false).toUriString();
-            logger.debug("Fetching salary structure assignment for employee {}: {}", employee, finalUrl);
 
             ResponseEntity<Map> response = restTemplate.exchange(
                 finalUrl,
@@ -176,28 +156,23 @@ public class UpdateBaseSalaryService {
 
             Map<String, Object> responseBody = response.getBody();
             if (responseBody == null || !responseBody.containsKey("data") || ((List<?>) responseBody.get("data")).isEmpty()) {
-                logger.warn("No salary structure assignment found for employee: {}", employee);
                 return;
             }
 
             Map<String, Object> assignment = ((List<Map<String, Object>>) responseBody.get("data")).get(0);
             String assignmentName = (String) assignment.get("name");
 
-            // update the base salary
             Map<String, Object> updateData = new HashMap<>();
             updateData.put("base", newBaseSalary);
 
             HttpEntity<Map<String, Object>> updateEntity = new HttpEntity<>(updateData, headers);
             String updateUrl = ErpNextConfig.ERP_NEXT_API_URL + "Salary Structure Assignment/" + assignmentName;
-            logger.debug("Updating base salary for employee {}: {}", employee, updateUrl);
 
             restTemplate.exchange(updateUrl, HttpMethod.PUT, updateEntity, Map.class);
         } catch (JsonProcessingException e) {
-            logger.error("Error processing JSON for ERPNext Salary Structure Assignment API call", e);
-            throw new RuntimeException("Error processing JSON for ERPNext Salary Structure Assignment API call", e);
+            throw new RuntimeException("Error", e);
         } catch (RestClientException e) {
-            logger.error("Error calling ERPNext Salary Structure Assignment API: {}", e.getMessage());
-            throw new RuntimeException("Error calling ERPNext Salary Structure Assignment API: " + e.getMessage(), e);
+            throw new RuntimeException("Error  " + e.getMessage(), e);
         }
     }
 }
