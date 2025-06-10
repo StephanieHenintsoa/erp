@@ -27,6 +27,9 @@
                 <li class="nav-item" th:classappend="${activePage == 'payroll-months'} ? 'active'">
                     <a th:href="@{/payroll/months}"><i class="fas fa-calendar-alt"></i> Paie Mensuelle</a>
                 </li>
+                <li class="nav-item" th:classappend="${activePage == 'generateSalary'} ? 'active'">
+                    <a th:href="@{/generate-salary}"><i class="fas fa-money-check-alt"></i> Générer Salaires</a>
+                </li>
                 <li class="nav-item">
                     <form th:action="@{/logout}" method="post">
                         <button type="submit" class="nav-link btn btn-link"><i class="fas fa-sign-out-alt"></i> Log Out</button>
