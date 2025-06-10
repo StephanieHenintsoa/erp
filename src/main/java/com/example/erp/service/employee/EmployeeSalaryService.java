@@ -214,8 +214,6 @@ public class EmployeeSalaryService {
         } catch (RestClientException e) {
             System.err.println("Error creating salary record: " + e.getMessage());
             throw new RuntimeException("Error creating salary record in ERPNext: " + e.getMessage(), e);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error processing salary data to JSON", e);
         }
     }
 }
