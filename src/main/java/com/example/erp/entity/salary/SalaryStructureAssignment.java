@@ -10,6 +10,9 @@ public class SalaryStructureAssignment {
     @JsonProperty("variable")
     private Double variable;
 
+    @JsonProperty("salary_structure")
+    private String salaryStructure; 
+
     // getters and setters
     public Double getBase() {
         return base;
@@ -26,4 +29,13 @@ public class SalaryStructureAssignment {
     public void setVariable(Double variable) {
         this.variable = variable;
     }
+    public String getSalaryStructure() {
+        return salaryStructure;
+    }
+    public void setSalaryStructure(String salaryStructure) {
+        this.salaryStructure = salaryStructure;
+    }
+
+
+   
 }
